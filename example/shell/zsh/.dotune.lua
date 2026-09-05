@@ -1,0 +1,4 @@
+return {
+	'zsh',
+	Path.here,
+}

@@ -1,0 +1,3 @@
+[tasks.run]
+alias = "r"
+run = "cargo run -- --root example"
