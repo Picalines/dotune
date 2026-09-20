@@ -2,7 +2,8 @@ use std::path::{Component, Path};
 
 use mlua::prelude::*;
 
-use crate::{cli_args, lua_api};
+use super::lua_api::script_environment;
+use crate::cli_args;
 
 pub fn execute_root_script(lua: &Lua, args: &cli_args::CliArgs) -> LuaResult<LuaTable> {
     let root_script_path = args.root_dir.join(&args.config_name);
@@ -43,7 +44,7 @@ fn load_script(lua: &Lua, file_path: &Path, module_path: &Path) -> LuaResult<Lua
         ))
     })?;
 
-    let environment = lua_api::script_environment(lua, file_path)?;
+    let environment = script_environment(lua, file_path)?;
     environment.set("require", require_relative(lua, module_path)?)?;
 
     lua.load(source_code)

@@ -1,20 +1,16 @@
 mod cli_args;
-mod lua_api;
-mod lua_require;
+mod lua;
 
 use clap::Parser;
-use mlua::prelude::*;
 
-fn main() -> LuaResult<()> {
+fn main() {
     let args = cli_args::CliArgs::parse();
 
-    let lua = Lua::new();
-    lua.load_std_libs(LuaStdLib::ALL_SAFE)?;
-
-    lua_require::add_package_searcher(&lua, &args)?;
-    let config_table = lua_require::execute_root_script(&lua, &args)?;
-
-    dbg!(config_table);
-
-    Ok(())
+    let _ = match lua::run_config_scripts(&args) {
+        Ok(config) => config,
+        Err(error) => {
+            dbg!(error);
+            return;
+        }
+    };
 }
