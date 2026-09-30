@@ -6,6 +6,8 @@ edition = "2024"
 [dependencies]
 anyhow = "1.0.104"
 clap = { version = "4.6.6", features = ["derive"] }
+derived-deref = "2.1.0"
 itertools = "0.15.0"
 mlua = { version = "0.12.0", features = ["anyhow", "lua55", "macros"] }
+thiserror = "2.0.21"
 which = "8.0.5"

@@ -1,5 +1,7 @@
 mod cli_args;
+mod command;
 mod lua;
+mod shared;
 
 use clap::Parser;
 

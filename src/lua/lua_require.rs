@@ -6,12 +6,12 @@ use super::lua_api::script_environment;
 use crate::cli_args;
 
 pub fn execute_root_script(lua: &Lua, args: &cli_args::CliArgs) -> LuaResult<LuaTable> {
-    let root_script_path = args.root_dir.join(&args.config_name);
+    let root_script_path = args.repo_path.join(&args.config_name);
     load_script(lua, &root_script_path, Path::new(""))?.call::<LuaTable>(())
 }
 
 pub fn add_package_searcher(lua: &Lua, args: &cli_args::CliArgs) -> LuaResult<()> {
-    let root_dir = args.root_dir.clone();
+    let root_dir = args.repo_path.clone();
     let init_module_name = args.config_name.clone();
 
     let searchers = lua

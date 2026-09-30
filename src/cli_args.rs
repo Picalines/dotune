@@ -2,25 +2,21 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
+use crate::{command::RepoPath, shared::SimplePath};
+
 #[derive(Parser)]
 pub struct CliArgs {
-    #[arg(short, long = "root", default_value = ".", value_parser = parse_existing_dir)]
-    pub root_dir: PathBuf,
+    #[arg(short, long = "root", default_value = ".", value_parser = parse_repo_path)]
+    pub repo_path: RepoPath,
 
     #[arg(short, long, default_value = ".dotune.lua", value_parser = parse_filename)]
     pub config_name: PathBuf,
 }
 
-fn parse_existing_dir(path_arg: &str) -> Result<PathBuf, String> {
-    let Ok(path) = std::fs::canonicalize(path_arg) else {
-        return Err(format!("'{}' is not an existing path", path_arg));
-    };
-
-    if !path.is_dir() {
-        return Err(format!("'{}' is not a directory", path_arg));
-    }
-
-    Ok(path)
+fn parse_repo_path(path_arg: &str) -> Result<RepoPath, String> {
+    SimplePath::canonicalize(path_arg)
+        .map_err(|error| error.to_string())
+        .and_then(|simple_path| RepoPath::new(&simple_path).map_err(|error| error.to_string()))
 }
 
 fn parse_filename(value: &str) -> Result<PathBuf, String> {
