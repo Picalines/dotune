@@ -3,16 +3,18 @@ mod command;
 mod lua;
 mod shared;
 
+use std::process::ExitCode;
+
 use clap::Parser;
 
-fn main() {
+fn main() -> ExitCode {
     let args = cli_args::CliArgs::parse();
 
-    let _ = match lua::run_config_scripts(&args) {
-        Ok(config) => config,
+    match lua::run_config_scripts(&args) {
+        Ok(()) => ExitCode::SUCCESS,
         Err(error) => {
-            dbg!(error);
-            return;
+            eprintln!("{error}");
+            ExitCode::FAILURE
         }
-    };
+    }
 }

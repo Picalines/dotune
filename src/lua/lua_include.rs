@@ -26,7 +26,7 @@ fn load_script(lua: &Lua, file_path: &Path, dir_script_name: &Path) -> LuaResult
     )?;
 
     lua.load(source_code)
-        .set_name(file_path.to_string_lossy().as_ref())
+        .set_name(format!("@{}", file_path.display()))
         .set_environment(environment)
         .into_function()
 }
