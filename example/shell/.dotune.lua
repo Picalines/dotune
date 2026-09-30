@@ -1,5 +1,5 @@
 return {
 	'shell',
-	require 'bash',
-	require 'zsh',
+	include 'bash',
+	include 'zsh',
 }

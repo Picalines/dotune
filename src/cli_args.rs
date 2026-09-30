@@ -10,7 +10,7 @@ pub struct CliArgs {
     pub repo_path: RepoPath,
 
     #[arg(short, long, default_value = ".dotune.lua", value_parser = parse_filename)]
-    pub config_name: PathBuf,
+    pub dir_script_name: PathBuf,
 }
 
 fn parse_repo_path(path_arg: &str) -> Result<RepoPath, String> {
