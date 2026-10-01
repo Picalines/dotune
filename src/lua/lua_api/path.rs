@@ -7,6 +7,7 @@ use super::utils::bad_argument;
 
 #[derive(LuaUserData, FromLua, Clone)]
 pub struct Path {
+    #[lua(skip)]
     pub buf: PathBuf,
 }
 
