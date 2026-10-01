@@ -5,7 +5,7 @@ use mlua::prelude::*;
 use super::path::Path;
 use super::utils::bad_argument;
 
-#[derive(LuaUserData, Debug)]
+#[derive(LuaUserData, Clone, Debug)]
 pub struct Link {
     #[lua(skip)]
     pub path1: PathBuf,

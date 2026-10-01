@@ -9,9 +9,9 @@ pub fn run_config_scripts(cli_args: &CliArgs) -> LuaResult<()> {
 
     lua.load_std_libs(LuaStdLib::ALL_SAFE)?;
 
-    let config_table = execute_root_script(&lua, &cli_args)?;
+    let lua_config = execute_root_script(&lua, &cli_args)?;
 
-    dbg!(config_table);
+    dbg!(lua_config);
 
     Ok(())
 }

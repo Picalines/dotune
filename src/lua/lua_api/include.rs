@@ -1,7 +1,10 @@
-use super::super::lua_exec::load_script;
+use super::super::lua_exec::execute_config_script;
 use super::utils::bad_argument;
 use mlua::prelude::*;
-use std::path::{Component, Path};
+use std::{
+    path::{Component, Path},
+    sync::Arc,
+};
 
 pub(super) fn create_include(
     lua: &Lua,
@@ -25,8 +28,10 @@ pub(super) fn create_include(
             ));
         }
 
-        let file_path = script_dir.join(relative_path).join(&dir_script_name);
-        load_script(lua, &file_path, &dir_script_name)?.call::<LuaValue>(())
+        let script_path = script_dir.join(relative_path).join(&dir_script_name);
+        let config = execute_config_script(lua, &script_path, &dir_script_name)?;
+
+        Ok(Arc::new(config))
     })
 }
 

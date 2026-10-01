@@ -1,8 +1,12 @@
 if not Path.which 'bash' then
-	return { 'nope!' }
+	return {}
 end
 
+local bashrc = '.bashrc'
+
 return {
-	'bash',
-	Path.here,
+	Link {
+		Path.here / bashrc,
+		Path.home / bashrc,
+	},
 }

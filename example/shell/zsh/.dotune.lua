@@ -1,4 +1,12 @@
+if not Path.which 'zsh' then
+	return {}
+end
+
+local zshrc = '.zshrc'
+
 return {
-	'zsh',
-	Path.here,
+	Link {
+		Path.here / zshrc,
+		Path.home / zshrc,
+	},
 }
