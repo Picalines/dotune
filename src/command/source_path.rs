@@ -1,4 +1,4 @@
-use std::io;
+use std::{io, path::Path};
 
 use derived_deref::Deref;
 use thiserror::Error;
@@ -38,7 +38,7 @@ pub enum RepoPathError {
 
 impl SourcePath {
     pub fn new(repo_path: &RepoPath, path: SimplePath) -> Result<Self, SourcePathError> {
-        let mut current = repo_path.to_path_buf();
+        let mut current = Path::to_path_buf(&repo_path);
 
         for component in path
             .strip_prefix(&current)

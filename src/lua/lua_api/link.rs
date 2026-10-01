@@ -6,12 +6,7 @@ use super::path::Path;
 use super::utils::bad_argument;
 
 #[derive(LuaUserData, Clone, Debug)]
-pub struct Link {
-    #[lua(skip)]
-    pub path1: PathBuf,
-    #[lua(skip)]
-    pub path2: PathBuf,
-}
+pub struct Link(#[lua(skip)] pub PathBuf, #[lua(skip)] pub PathBuf);
 
 #[derive(LuaUserData)]
 pub struct LinkFactory;
@@ -20,17 +15,13 @@ pub struct LinkFactory;
 impl LinkFactory {
     #[lua(meta)]
     fn __call(&self, arg: LuaTable) -> LuaResult<Link> {
-        let mut arg_paths = arg.pairs::<LuaNumber, Path>();
+        let mut arg_paths = arg.sequence_values::<Path>();
 
-        let (Some(Ok((_, path1))), Some(Ok((_, path2)))) = (arg_paths.next(), arg_paths.next())
-        else {
+        let (Some(Ok(path1)), Some(Ok(path2))) = (arg_paths.next(), arg_paths.next()) else {
             return Err(bad_argument("Link", 1, None, "expected two paths"));
         };
 
-        Ok(Link {
-            path1: path1.buf,
-            path2: path2.buf,
-        })
+        Ok(Link(path1.0.to_path_buf(), path2.0.to_path_buf()))
     }
 }
 
@@ -38,6 +29,6 @@ impl LinkFactory {
 impl Link {
     #[lua(meta, infallible)]
     fn __tostring(&self) -> String {
-        format!("Link({}, {})", self.path1.display(), self.path2.display())
+        format!("Link({}, {})", self.0.display(), self.1.display())
     }
 }

@@ -1,18 +1,16 @@
-use std::path::Path as StdPath;
-
-use mlua::prelude::*;
-
 use super::include::create_include;
 use super::link::LinkFactory;
 use super::path::PathFactory;
+use crate::shared::SimplePath;
+use mlua::prelude::*;
 
-pub fn script_environment(lua: &Lua, script_path: &StdPath) -> LuaResult<LuaTable> {
+pub fn script_environment(lua: &Lua, script_path: &SimplePath) -> LuaResult<LuaTable> {
     let environment = lua.create_table()?;
 
     environment.set(
         "Path",
         PathFactory {
-            script_path: script_path.to_owned(),
+            script_path: script_path.clone(),
         },
     )?;
 
