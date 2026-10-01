@@ -1,7 +1,7 @@
 use super::Config;
 use super::lua_api::script_environment;
 use crate::cli_args;
-use crate::shared::SimplePath;
+use crate::shared::AbsolutePathBuf;
 use mlua::prelude::*;
 
 pub const CONFIG_FILE_NAME: &str = ".dotune.lua";
@@ -11,7 +11,7 @@ pub fn execute_root_script(lua: &Lua, args: &cli_args::CliArgs) -> LuaResult<Con
     execute_config_script(lua, &root_script_path)
 }
 
-pub(super) fn execute_config_script(lua: &Lua, script_path: &SimplePath) -> LuaResult<Config> {
+pub(super) fn execute_config_script(lua: &Lua, script_path: &AbsolutePathBuf) -> LuaResult<Config> {
     let script_fn = load_script(lua, script_path)?;
     let items_table: LuaTable = script_fn.call(())?;
     let items = Config::items(items_table)?;
@@ -21,7 +21,7 @@ pub(super) fn execute_config_script(lua: &Lua, script_path: &SimplePath) -> LuaR
     })
 }
 
-fn load_script(lua: &Lua, file_path: &SimplePath) -> LuaResult<LuaFunction> {
+fn load_script(lua: &Lua, file_path: &AbsolutePathBuf) -> LuaResult<LuaFunction> {
     let source_code = std::fs::read(file_path).map_err(|error| {
         LuaError::runtime(format!("could not read '{}': {error}", file_path.display()))
     })?;

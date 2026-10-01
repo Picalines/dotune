@@ -6,11 +6,11 @@ use std::{
 };
 
 /// An absolute normalized path. Gives guarantee only about the string - symlinks and existence is
-/// checked elsewhere. Yes, it'a a bad name - let me have fun
+/// checked elsewhere
 #[derive(Clone, Debug)]
-pub struct SimplePath(PathBuf);
+pub struct AbsolutePathBuf(PathBuf);
 
-impl SimplePath {
+impl AbsolutePathBuf {
     pub fn new(path: PathBuf) -> Option<Self> {
         (path.is_absolute() && Self::all_components_are_simple(&path)).then(|| Self(path))
     }
@@ -49,7 +49,7 @@ impl SimplePath {
         }
     }
 
-    pub fn join(&self, path: impl AsRef<Path>) -> SimplePath {
+    pub fn join(&self, path: impl AsRef<Path>) -> AbsolutePathBuf {
         let mut buf = self.clone();
         buf.push(path);
         buf
@@ -85,7 +85,7 @@ impl SimplePath {
     }
 }
 
-impl Deref for SimplePath {
+impl Deref for AbsolutePathBuf {
     type Target = Path;
 
     fn deref(&self) -> &Self::Target {
@@ -93,24 +93,24 @@ impl Deref for SimplePath {
     }
 }
 
-impl<T> AsRef<T> for SimplePath
+impl<T> AsRef<T> for AbsolutePathBuf
 where
     T: ?Sized,
-    <SimplePath as Deref>::Target: AsRef<T>,
+    <AbsolutePathBuf as Deref>::Target: AsRef<T>,
 {
     fn as_ref(&self) -> &T {
         self.deref().as_ref()
     }
 }
 
-impl mlua::FromLua for SimplePath {
+impl mlua::FromLua for AbsolutePathBuf {
     fn from_lua(value: mlua::Value, lua: &mlua::Lua) -> mlua::Result<Self> {
         let path = PathBuf::from_lua(value, lua)?;
-        SimplePath::new(path).ok_or_else(|| mlua::Error::external("lua path is not simple"))
+        AbsolutePathBuf::new(path).ok_or_else(|| mlua::Error::external("lua path is not absolute"))
     }
 }
 
-impl mlua::IntoLua for SimplePath {
+impl mlua::IntoLua for AbsolutePathBuf {
     fn into_lua(self, lua: &mlua::Lua) -> mlua::Result<mlua::Value> {
         self.0.into_lua(lua)
     }

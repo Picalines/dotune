@@ -1,14 +1,14 @@
 use super::super::lua_exec::CONFIG_FILE_NAME;
 use super::super::lua_exec::execute_config_script;
 use super::utils::bad_argument;
-use crate::shared::SimplePath;
+use crate::shared::AbsolutePathBuf;
 use mlua::prelude::*;
 use std::{
     path::{Component, Path},
     sync::Arc,
 };
 
-pub(super) fn create_include(lua: &Lua, script_path: &SimplePath) -> LuaResult<LuaFunction> {
+pub(super) fn create_include(lua: &Lua, script_path: &AbsolutePathBuf) -> LuaResult<LuaFunction> {
     let script_dir = script_path
         .owned_parent()
         .expect("script should be in some directory");

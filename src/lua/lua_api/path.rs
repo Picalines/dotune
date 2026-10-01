@@ -1,15 +1,15 @@
 use super::utils::bad_argument;
-use crate::shared::SimplePath;
+use crate::shared::AbsolutePathBuf;
 use itertools::Itertools;
 use mlua::prelude::*;
 use std::path::{Component, Path as StdPath};
 
 #[derive(LuaUserData, FromLua, Clone)]
-pub struct Path(#[lua(skip)] pub SimplePath);
+pub struct Path(#[lua(skip)] pub AbsolutePathBuf);
 
 #[derive(LuaUserData)]
 pub struct PathFactory {
-    pub script_path: SimplePath,
+    pub script_path: AbsolutePathBuf,
 }
 
 #[mlua::userdata_impl]
@@ -37,7 +37,7 @@ impl PathFactory {
         // TODO: cache
         let home_path = std::env::home_dir()
             .ok_or_else(|| LuaError::external("could not determine the home directory"))?;
-        SimplePath::canonicalize(home_path)
+        AbsolutePathBuf::canonicalize(home_path)
             .map(Path)
             .map_err(LuaError::external)
     }
@@ -48,7 +48,7 @@ impl PathFactory {
             Err(which::Error::CannotFindBinaryPath) => Ok(None),
             Err(error) => Err(LuaError::external(error)),
             Ok(bin_path) => Ok(Some(Path(
-                SimplePath::new(bin_path).expect("which should return an absolute path"),
+                AbsolutePathBuf::new(bin_path).expect("which should return an absolute path"),
             ))),
         }
     }
@@ -115,7 +115,7 @@ impl Path {
 
     #[lua(infallible)]
     fn resolve(&self) -> Option<Self> {
-        SimplePath::canonicalize(&self.0).map(Self).ok()
+        AbsolutePathBuf::canonicalize(&self.0).map(Self).ok()
     }
 
     #[lua(meta, infallible)]

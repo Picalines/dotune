@@ -1,10 +1,10 @@
 use super::include::create_include;
 use super::link::LinkFactory;
 use super::path::PathFactory;
-use crate::shared::SimplePath;
+use crate::shared::AbsolutePathBuf;
 use mlua::prelude::*;
 
-pub fn script_environment(lua: &Lua, script_path: &SimplePath) -> LuaResult<LuaTable> {
+pub fn script_environment(lua: &Lua, script_path: &AbsolutePathBuf) -> LuaResult<LuaTable> {
     let environment = lua.create_table()?;
 
     environment.set(

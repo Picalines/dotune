@@ -1,3 +1,3 @@
-mod simple_path;
+mod absolute_path;
 
-pub use simple_path::SimplePath;
+pub use absolute_path::AbsolutePathBuf;

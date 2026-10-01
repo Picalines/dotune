@@ -3,11 +3,11 @@ use std::{io, path::Path};
 use derived_deref::Deref;
 use thiserror::Error;
 
-use crate::shared::SimplePath;
+use crate::shared::AbsolutePathBuf;
 
-/// A simple existing non-symbolic path to something in (or is the) repository
+/// An absolute existing non-symbolic path to something in (or is the) repository
 #[derive(Clone, Deref, Debug)]
-pub struct SourcePath(SimplePath);
+pub struct SourcePath(AbsolutePathBuf);
 
 #[derive(Error, Debug)]
 pub enum SourcePathError {
@@ -37,7 +37,7 @@ pub enum RepoPathError {
 }
 
 impl SourcePath {
-    pub fn new(repo_path: &RepoPath, path: SimplePath) -> Result<Self, SourcePathError> {
+    pub fn new(repo_path: &RepoPath, path: AbsolutePathBuf) -> Result<Self, SourcePathError> {
         let mut current = Path::to_path_buf(&repo_path);
 
         for component in path
@@ -54,12 +54,12 @@ impl SourcePath {
         Ok(Self(path))
     }
 
-    fn new_free(path: &SimplePath) -> Result<Self, SourcePathError> {
+    fn new_free(path: &AbsolutePathBuf) -> Result<Self, SourcePathError> {
         if path.symlink_metadata().is_ok_and(|meta| meta.is_symlink()) {
             return Err(SourcePathError::IsOrInsideSymlink);
         }
 
-        let canonical_path = match SimplePath::canonicalize(&path) {
+        let canonical_path = match AbsolutePathBuf::canonicalize(&path) {
             Ok(path) => path,
             Err(error) => match error.kind() {
                 io::ErrorKind::NotFound => return Err(SourcePathError::DoesNotExist),
@@ -72,7 +72,7 @@ impl SourcePath {
 }
 
 impl RepoPath {
-    pub fn new(path: &SimplePath) -> Result<Self, RepoPathError> {
+    pub fn new(path: &AbsolutePathBuf) -> Result<Self, RepoPathError> {
         let path = match SourcePath::new_free(path) {
             Ok(path) => path,
             Err(source_error) => {

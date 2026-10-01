@@ -1,12 +1,12 @@
 use super::Link;
-use crate::shared::SimplePath;
+use crate::shared::AbsolutePathBuf;
 use mlua::prelude::*;
 use std::sync::Arc;
 
 #[derive(LuaUserData, Debug)]
 pub struct Config {
     #[lua(skip)]
-    pub script_path: SimplePath,
+    pub script_path: AbsolutePathBuf,
     #[lua(skip)]
     pub items: Arc<[ConfigItem]>,
 }

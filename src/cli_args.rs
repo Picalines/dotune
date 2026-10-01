@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use crate::{command::RepoPath, shared::SimplePath};
+use crate::{command::RepoPath, shared::AbsolutePathBuf};
 
 #[derive(Parser)]
 pub struct CliArgs {
@@ -9,7 +9,6 @@ pub struct CliArgs {
 }
 
 fn parse_repo_path(path_arg: &str) -> Result<RepoPath, String> {
-    SimplePath::canonicalize(path_arg)
-        .map_err(|error| error.to_string())
-        .and_then(|simple_path| RepoPath::new(&simple_path).map_err(|error| error.to_string()))
+    let path = AbsolutePathBuf::canonicalize(path_arg).map_err(|error| error.to_string())?;
+    RepoPath::new(&path).map_err(|error| error.to_string())
 }
