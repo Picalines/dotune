@@ -2,7 +2,7 @@ use mlua::prelude::*;
 
 use crate::cli_args::CliArgs;
 
-use super::lua_include::execute_root_script;
+use super::lua_exec::execute_root_script;
 
 pub fn run_config_scripts(cli_args: &CliArgs) -> LuaResult<()> {
     let lua = Lua::new();

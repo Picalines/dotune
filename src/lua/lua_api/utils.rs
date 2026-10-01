@@ -7,6 +7,6 @@ pub fn bad_argument(to_func: &str, pos: usize, name: Option<&str>, message: &str
         to: Some(to_func.to_string()),
         pos,
         name: name.map(ToOwned::to_owned),
-        cause: Arc::new(LuaError::runtime(message)),
+        cause: Arc::new(message.into_lua_err()),
     }
 }

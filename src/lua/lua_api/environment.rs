@@ -1,10 +1,16 @@
-use mlua::prelude::*;
 use std::path::Path as StdPath;
 
+use mlua::prelude::*;
+
+use super::include::create_include;
 use super::link::LinkFactory;
 use super::path::PathFactory;
 
-pub fn script_environment(lua: &Lua, script_path: &StdPath) -> LuaResult<LuaTable> {
+pub fn script_environment(
+    lua: &Lua,
+    script_path: &StdPath,
+    dir_script_name: &StdPath,
+) -> LuaResult<LuaTable> {
     let environment = lua.create_table()?;
 
     environment.set(
@@ -15,6 +21,11 @@ pub fn script_environment(lua: &Lua, script_path: &StdPath) -> LuaResult<LuaTabl
     )?;
 
     environment.set("Link", LinkFactory)?;
+
+    environment.set(
+        "include",
+        create_include(lua, script_path, dir_script_name)?,
+    )?;
 
     let env_meta = lua.create_table()?;
     env_meta.set("__index", lua.globals())?;
