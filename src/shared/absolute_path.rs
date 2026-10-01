@@ -4,6 +4,7 @@ use std::{
     io,
     ops::Deref,
     path::{Component, Path, PathBuf},
+    sync::Arc,
 };
 
 /// An absolute normalized path. Gives guarantee only about the string - symlinks and existence is
@@ -71,6 +72,20 @@ impl AsRef<Path> for AbsolutePath {
     }
 }
 
+impl AsRef<AbsolutePath> for AbsolutePath {
+    fn as_ref(&self) -> &AbsolutePath {
+        self
+    }
+}
+
+impl From<&AbsolutePath> for Arc<AbsolutePath> {
+    fn from(path: &AbsolutePath) -> Self {
+        let path: Arc<Path> = Arc::from(&path.0);
+        let ptr = Arc::into_raw(path) as *const AbsolutePath;
+        unsafe { Arc::from_raw(ptr) }
+    }
+}
+
 /// Owned version of [`AbsolutePath`]
 #[derive(Clone, Debug)]
 pub struct AbsolutePathBuf(PathBuf);
@@ -129,6 +144,12 @@ where
 impl From<AbsolutePathBuf> for PathBuf {
     fn from(path: AbsolutePathBuf) -> Self {
         path.0
+    }
+}
+
+impl From<AbsolutePathBuf> for Arc<AbsolutePath> {
+    fn from(path: AbsolutePathBuf) -> Self {
+        Self::from(path.deref())
     }
 }
 
