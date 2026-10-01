@@ -4,17 +4,15 @@ use crate::cli_args;
 use mlua::prelude::*;
 use std::path::Path;
 
+pub const CONFIG_FILE_NAME: &str = ".dotune.lua";
+
 pub fn execute_root_script(lua: &Lua, args: &cli_args::CliArgs) -> LuaResult<Config> {
-    let root_script_path = args.repo_path.join(&args.dir_script_name);
-    execute_config_script(lua, &root_script_path, &args.dir_script_name)
+    let root_script_path = args.repo_path.join(CONFIG_FILE_NAME);
+    execute_config_script(lua, &root_script_path)
 }
 
-pub(super) fn execute_config_script(
-    lua: &Lua,
-    script_path: &Path,
-    dir_script_name: &Path,
-) -> LuaResult<Config> {
-    let script_fn = load_script(lua, script_path, dir_script_name)?;
+pub(super) fn execute_config_script(lua: &Lua, script_path: &Path) -> LuaResult<Config> {
+    let script_fn = load_script(lua, script_path)?;
     let items_table: LuaTable = script_fn.call(())?;
     let items = Config::items(items_table)?;
     Ok(Config {
@@ -23,12 +21,12 @@ pub(super) fn execute_config_script(
     })
 }
 
-fn load_script(lua: &Lua, file_path: &Path, dir_script_name: &Path) -> LuaResult<LuaFunction> {
+fn load_script(lua: &Lua, file_path: &Path) -> LuaResult<LuaFunction> {
     let source_code = std::fs::read(file_path).map_err(|error| {
         LuaError::runtime(format!("could not read '{}': {error}", file_path.display()))
     })?;
 
-    let environment = script_environment(lua, file_path, dir_script_name)?;
+    let environment = script_environment(lua, file_path)?;
 
     lua.load(source_code)
         .set_name(format!("@{}", file_path.display()))

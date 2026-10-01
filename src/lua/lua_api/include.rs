@@ -1,3 +1,4 @@
+use super::super::lua_exec::CONFIG_FILE_NAME;
 use super::super::lua_exec::execute_config_script;
 use super::utils::bad_argument;
 use mlua::prelude::*;
@@ -6,17 +7,11 @@ use std::{
     sync::Arc,
 };
 
-pub(super) fn create_include(
-    lua: &Lua,
-    script_path: &Path,
-    dir_script_name: &Path,
-) -> LuaResult<LuaFunction> {
+pub(super) fn create_include(lua: &Lua, script_path: &Path) -> LuaResult<LuaFunction> {
     let script_dir = script_path
         .parent()
         .expect("script should be in some directory")
         .to_owned();
-
-    let dir_script_name = dir_script_name.to_owned();
 
     lua.create_function(move |lua, relative_path: String| {
         if !is_include_path(&relative_path) {
@@ -28,8 +23,8 @@ pub(super) fn create_include(
             ));
         }
 
-        let script_path = script_dir.join(relative_path).join(&dir_script_name);
-        let config = execute_config_script(lua, &script_path, &dir_script_name)?;
+        let script_path = script_dir.join(relative_path).join(CONFIG_FILE_NAME);
+        let config = execute_config_script(lua, &script_path)?;
 
         Ok(Arc::new(config))
     })
