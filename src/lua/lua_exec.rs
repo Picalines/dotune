@@ -1,7 +1,7 @@
 use super::Config;
 use super::lua_api::script_environment;
 use crate::cli_args;
-use crate::shared::AbsolutePath;
+use crate::model::AbsolutePath;
 use mlua::prelude::*;
 
 pub const CONFIG_FILE_NAME: &str = ".dotune.lua";

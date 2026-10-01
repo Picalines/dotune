@@ -1,7 +1,6 @@
 mod cli_args;
-mod command;
 mod lua;
-mod shared;
+mod model;
 
 use std::process::ExitCode;
 

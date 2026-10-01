@@ -1,7 +1,7 @@
 use super::super::lua_exec::CONFIG_FILE_NAME;
 use super::super::lua_exec::execute_config_script;
 use super::utils::bad_argument;
-use crate::shared::AbsolutePath;
+use crate::model::AbsolutePath;
 use mlua::prelude::*;
 use std::{
     path::{Component, Path},

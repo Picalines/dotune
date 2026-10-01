@@ -1,5 +1,5 @@
 use super::Link;
-use crate::shared::AbsolutePathBuf;
+use crate::model::AbsolutePathBuf;
 use mlua::prelude::*;
 use std::sync::Arc;
 

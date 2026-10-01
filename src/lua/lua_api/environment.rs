@@ -1,7 +1,7 @@
 use super::include::create_include;
 use super::link::LinkFactory;
 use super::path::PathFactory;
-use crate::shared::AbsolutePath;
+use crate::model::AbsolutePath;
 use mlua::prelude::*;
 
 pub fn script_environment(lua: &Lua, script_path: &AbsolutePath) -> LuaResult<LuaTable> {

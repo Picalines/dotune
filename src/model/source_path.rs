@@ -1,9 +1,7 @@
-use std::{io, ops::Deref, sync::Arc};
-
+use crate::model::{AbsolutePath, AbsolutePathBuf};
 use derived_deref::Deref;
+use std::{io, ops::Deref, sync::Arc};
 use thiserror::Error;
-
-use crate::shared::{AbsolutePath, AbsolutePathBuf};
 
 /// An absolute existing non-symbolic path to something in (or is the) repository
 #[derive(Clone, Debug)]

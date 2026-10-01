@@ -1,6 +1,6 @@
 use clap::Parser;
 
-use crate::{command::RepoPath, shared::AbsolutePathBuf};
+use crate::model::{AbsolutePathBuf, RepoPath};
 
 #[derive(Parser)]
 pub struct CliArgs {

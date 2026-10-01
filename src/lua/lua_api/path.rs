@@ -1,5 +1,5 @@
 use super::utils::bad_argument;
-use crate::shared::AbsolutePathBuf;
+use crate::model::AbsolutePathBuf;
 use itertools::Itertools;
 use mlua::prelude::*;
 use std::path::{Component, Path as StdPath};
