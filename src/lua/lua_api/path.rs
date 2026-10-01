@@ -19,16 +19,16 @@ impl PathFactory {
         Path(self.script_path.clone())
     }
 
-    #[lua(getter)]
-    fn script_dir(&self) -> LuaResult<Path> {
+    #[lua(getter, infallible)]
+    fn script_dir(&self) -> Path {
         self.script_path
-            .owned_parent()
-            .map(Path)
-            .ok_or_else(|| LuaError::runtime(""))
+            .parent()
+            .map(|parent| Path(parent.to_owned()))
+            .expect("script path always lives in some directory")
     }
 
-    #[lua(getter)]
-    fn here(&self) -> LuaResult<Path> {
+    #[lua(getter, infallible)]
+    fn here(&self) -> Path {
         self.script_dir()
     }
 
@@ -63,7 +63,7 @@ impl PathFactory {
 impl Path {
     #[lua(getter, infallible)]
     fn parent(&self) -> Option<Self> {
-        self.0.owned_parent().map(Self)
+        self.0.parent().map(|parent| Self(parent.to_owned()))
     }
 
     #[lua]

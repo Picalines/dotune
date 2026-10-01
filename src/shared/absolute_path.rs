@@ -1,4 +1,5 @@
 use std::{
+    borrow::Borrow,
     ffi::OsStr,
     io,
     ops::Deref,
@@ -7,32 +8,83 @@ use std::{
 
 /// An absolute normalized path. Gives guarantee only about the string - symlinks and existence is
 /// checked elsewhere
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct AbsolutePath(Path);
+
+impl AbsolutePath {
+    pub fn new(path: &Path) -> Option<&Self> {
+        (path.is_absolute()
+            && path.components().all(|component| {
+                matches!(
+                    component,
+                    Component::Prefix(_) | Component::RootDir | Component::Normal(_)
+                )
+            }))
+        .then(|| Self::from_path(path))
+    }
+
+    pub fn parent(&self) -> Option<&Self> {
+        self.0.parent().map(Self::from_path)
+    }
+
+    pub fn join(&self, path: impl AsRef<Path>) -> AbsolutePathBuf {
+        let mut buf = self.to_owned();
+        buf.push(path);
+        buf
+    }
+
+    pub fn with_file_name(&self, file_name: impl AsRef<OsStr>) -> AbsolutePathBuf {
+        AbsolutePathBuf(self.0.with_file_name(file_name))
+    }
+
+    pub fn with_extension(&self, extension: impl AsRef<OsStr>) -> AbsolutePathBuf {
+        AbsolutePathBuf(self.0.with_extension(extension))
+    }
+
+    fn from_path(path: &Path) -> &Self {
+        // SAFETY: same as for Path in PathBuf in std, valid as long as layout of Self and Path are
+        // same. Keep repr(transparent) for that to be true
+        unsafe { &*(path as *const Path as *const Self) }
+    }
+}
+
+impl Deref for AbsolutePath {
+    type Target = Path;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl ToOwned for AbsolutePath {
+    type Owned = AbsolutePathBuf;
+
+    fn to_owned(&self) -> Self::Owned {
+        AbsolutePathBuf(self.0.to_owned())
+    }
+}
+
+impl AsRef<Path> for AbsolutePath {
+    fn as_ref(&self) -> &Path {
+        &self.0
+    }
+}
+
+/// Owned version of [`AbsolutePath`]
 #[derive(Clone, Debug)]
 pub struct AbsolutePathBuf(PathBuf);
 
 impl AbsolutePathBuf {
     pub fn new(path: PathBuf) -> Option<Self> {
-        (path.is_absolute() && Self::all_components_are_simple(&path)).then(|| Self(path))
+        AbsolutePath::new(&path)?;
+        Some(Self(path))
     }
 
     pub fn canonicalize(path: impl AsRef<Path>) -> io::Result<Self> {
         let canonical_path = std::fs::canonicalize(path)?;
-
-        Self::unreachable_path(&canonical_path);
-
-        Ok(Self(canonical_path))
-    }
-
-    pub fn to_path_buf(self) -> PathBuf {
-        self.0
-    }
-
-    // NOTE: not optimal, but we don't need ref parent currently
-    pub fn owned_parent(&self) -> Option<Self> {
-        self.0.parent().map(|parent| {
-            Self::unreachable_path(parent);
-            Self(parent.to_owned())
-        })
+        Ok(Self::new(canonical_path)
+            .expect("canonicalize always returns an absolute path without indirection"))
     }
 
     pub fn push(&mut self, path: impl AsRef<Path>) {
@@ -48,48 +100,19 @@ impl AbsolutePathBuf {
             }
         }
     }
-
-    pub fn join(&self, path: impl AsRef<Path>) -> AbsolutePathBuf {
-        let mut buf = self.clone();
-        buf.push(path);
-        buf
-    }
-
-    pub fn with_file_name(&self, file_name: impl AsRef<OsStr>) -> Self {
-        Self(self.0.with_file_name(file_name))
-    }
-
-    pub fn with_extension(&self, extension: impl AsRef<OsStr>) -> Self {
-        Self(self.0.with_extension(extension))
-    }
-
-    fn unreachable_path(path: &Path) {
-        if !path.is_absolute() {
-            unreachable!("canonicalize always returns an absolute path")
-        }
-
-        if !Self::all_components_are_simple(&path) {
-            unreachable!("canonicalize always returns an absolute path without indirection")
-        }
-    }
-
-    fn all_components_are_simple(path: &Path) -> bool {
-        path.components().all(|c| Self::is_simple_component(&c))
-    }
-
-    fn is_simple_component(component: &Component) -> bool {
-        matches!(
-            component,
-            Component::Prefix(_) | Component::RootDir | Component::Normal(_)
-        )
-    }
 }
 
 impl Deref for AbsolutePathBuf {
-    type Target = Path;
+    type Target = AbsolutePath;
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        AbsolutePath::from_path(&self.0)
+    }
+}
+
+impl Borrow<AbsolutePath> for AbsolutePathBuf {
+    fn borrow(&self) -> &AbsolutePath {
+        self.deref()
     }
 }
 
@@ -100,6 +123,12 @@ where
 {
     fn as_ref(&self) -> &T {
         self.deref().as_ref()
+    }
+}
+
+impl From<AbsolutePathBuf> for PathBuf {
+    fn from(path: AbsolutePathBuf) -> Self {
+        path.0
     }
 }
 

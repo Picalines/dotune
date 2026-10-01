@@ -21,7 +21,7 @@ impl LinkFactory {
             return Err(bad_argument("Link", 1, None, "expected two paths"));
         };
 
-        Ok(Link(path1.0.to_path_buf(), path2.0.to_path_buf()))
+        Ok(Link(path1.0.into(), path2.0.into()))
     }
 }
 
