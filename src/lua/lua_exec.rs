@@ -3,6 +3,7 @@ use super::lua_api::script_environment;
 use crate::cli_args;
 use crate::model::AbsolutePath;
 use mlua::prelude::*;
+use std::fs;
 
 pub const CONFIG_FILE_NAME: &str = ".dotune.lua";
 
@@ -22,7 +23,7 @@ pub(super) fn execute_config_script(lua: &Lua, script_path: &AbsolutePath) -> Lu
 }
 
 fn load_script(lua: &Lua, file_path: &AbsolutePath) -> LuaResult<LuaFunction> {
-    let source_code = std::fs::read(file_path).map_err(|error| {
+    let source_code = fs::read(file_path).map_err(|error| {
         LuaError::runtime(format!("could not read '{}': {error}", file_path.display()))
     })?;
 

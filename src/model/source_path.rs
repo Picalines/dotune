@@ -1,6 +1,7 @@
 use crate::model::{AbsolutePath, AbsolutePathBuf};
+use core::ops::Deref;
 use derived_deref::Deref;
-use std::{io, ops::Deref, sync::Arc};
+use std::{io, sync::Arc};
 use thiserror::Error;
 
 /// An absolute existing non-symbolic path to something in (or is the) repository
@@ -61,7 +62,7 @@ impl SourcePath {
             return Err(SourcePathError::IsOrInsideSymlink);
         }
 
-        let canonical_path = match AbsolutePathBuf::canonicalize(&path) {
+        let canonical_path = match AbsolutePathBuf::canonicalize(path) {
             Ok(path) => path,
             Err(error) => match error.kind() {
                 io::ErrorKind::NotFound => return Err(SourcePathError::DoesNotExist),

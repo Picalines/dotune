@@ -2,6 +2,7 @@ use super::utils::bad_argument;
 use crate::model::AbsolutePathBuf;
 use itertools::Itertools;
 use mlua::prelude::*;
+use std::env;
 use std::path::{Component, Path as StdPath};
 
 #[derive(LuaUserData, FromLua, Clone)]
@@ -35,7 +36,7 @@ impl PathFactory {
     #[lua(getter)]
     fn home(&self) -> LuaResult<Path> {
         // TODO: cache
-        let home_path = std::env::home_dir()
+        let home_path = env::home_dir()
             .ok_or_else(|| LuaError::external("could not determine the home directory"))?;
         AbsolutePathBuf::canonicalize(home_path)
             .map(Path)

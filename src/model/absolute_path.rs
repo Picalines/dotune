@@ -1,8 +1,7 @@
+use core::{borrow::Borrow, ops::Deref};
 use std::{
-    borrow::Borrow,
     ffi::OsStr,
-    io,
-    ops::Deref,
+    fs, io,
     path::{Component, Path, PathBuf},
     sync::Arc,
 };
@@ -97,7 +96,7 @@ impl AbsolutePathBuf {
     }
 
     pub fn canonicalize(path: impl AsRef<Path>) -> io::Result<Self> {
-        let canonical_path = std::fs::canonicalize(path)?;
+        let canonical_path = fs::canonicalize(path)?;
         Ok(Self::new(canonical_path)
             .expect("canonicalize always returns an absolute path without indirection"))
     }

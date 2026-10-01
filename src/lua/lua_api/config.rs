@@ -35,12 +35,12 @@ impl FromLua for ConfigItem {
             }
         }
 
-        return Err(LuaError::FromLuaConversionError {
+        Err(LuaError::FromLuaConversionError {
             from: value.type_name(),
             to: "ConfigItem".into(),
             // TODO: would be nice to generate?
             message: Some("script must return a table array with: Config, Link".into()),
-        });
+        })
     }
 }
 
