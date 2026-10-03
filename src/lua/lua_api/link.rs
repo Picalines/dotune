@@ -1,12 +1,16 @@
-use std::path::PathBuf;
-
-use mlua::prelude::*;
-
 use super::path::Path;
 use super::utils::bad_argument;
+use crate::model::AbsolutePath;
+use mlua::prelude::*;
+use std::sync::Arc;
 
 #[derive(LuaUserData, Clone, Debug)]
-pub struct Link(#[lua(skip)] pub PathBuf, #[lua(skip)] pub PathBuf);
+pub struct Link {
+    #[lua(skip)]
+    pub source_path: Arc<AbsolutePath>,
+    #[lua(skip)]
+    pub destination_path: Arc<AbsolutePath>,
+}
 
 #[derive(LuaUserData)]
 pub struct LinkFactory;
@@ -21,7 +25,10 @@ impl LinkFactory {
             return Err(bad_argument("Link", 1, None, "expected two paths"));
         };
 
-        Ok(Link(path1.0.into(), path2.0.into()))
+        Ok(Link {
+            source_path: path1.0,
+            destination_path: path2.0,
+        })
     }
 }
 
@@ -29,6 +36,10 @@ impl LinkFactory {
 impl Link {
     #[lua(meta, infallible)]
     fn __tostring(&self) -> String {
-        format!("Link({}, {})", self.0.display(), self.1.display())
+        format!(
+            "Link({}, {})",
+            self.source_path.display(),
+            self.destination_path.display()
+        )
     }
 }

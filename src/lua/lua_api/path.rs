@@ -1,16 +1,18 @@
 use super::utils::bad_argument;
-use crate::model::AbsolutePathBuf;
+use crate::model::{AbsolutePath, AbsolutePathBuf};
 use itertools::Itertools;
 use mlua::prelude::*;
 use std::env;
 use std::path::{Component, Path as StdPath};
+use std::sync::Arc;
 
 #[derive(LuaUserData, FromLua, Clone)]
-pub struct Path(#[lua(skip)] pub AbsolutePathBuf);
+pub struct Path(#[lua(skip)] pub Arc<AbsolutePath>);
 
 #[derive(LuaUserData)]
 pub struct PathFactory {
-    pub script_path: AbsolutePathBuf,
+    #[lua(skip)]
+    pub script_path: Arc<AbsolutePath>,
 }
 
 #[mlua::userdata_impl]
@@ -24,7 +26,7 @@ impl PathFactory {
     fn script_dir(&self) -> Path {
         self.script_path
             .parent()
-            .map(|parent| Path(parent.to_owned()))
+            .map(|parent| Path(parent.into()))
             .expect("script path always lives in some directory")
     }
 
@@ -39,7 +41,7 @@ impl PathFactory {
         let home_path = env::home_dir()
             .ok_or_else(|| LuaError::external("could not determine the home directory"))?;
         AbsolutePathBuf::canonicalize(home_path)
-            .map(Path)
+            .map(|abs_home_path| Path(abs_home_path.into()))
             .map_err(LuaError::external)
     }
 
@@ -49,7 +51,9 @@ impl PathFactory {
             Err(which::Error::CannotFindBinaryPath) => Ok(None),
             Err(error) => Err(LuaError::external(error)),
             Ok(bin_path) => Ok(Some(Path(
-                AbsolutePathBuf::new(bin_path).expect("which should return an absolute path"),
+                AbsolutePathBuf::new(bin_path)
+                    .expect("which should return an absolute path")
+                    .into(),
             ))),
         }
     }
@@ -64,18 +68,12 @@ impl PathFactory {
 impl Path {
     #[lua(getter, infallible)]
     fn parent(&self) -> Option<Self> {
-        self.0.parent().map(|parent| Self(parent.to_owned()))
+        self.0.parent().map(|parent| Self(parent.into()))
     }
 
     #[lua]
     fn join(&self, relative_path: &str) -> LuaResult<Self> {
-        let mut buf = self.0.clone();
-
-        for component in StdPath::new(relative_path).components() {
-            buf.push(component);
-        }
-
-        Ok(Self(buf))
+        Ok(Self(self.0.join(relative_path).into()))
     }
 
     #[lua]
@@ -90,7 +88,7 @@ impl Path {
             ));
         };
 
-        Ok(Self(self.0.with_file_name(normal_tail)))
+        Ok(Self(self.0.with_file_name(normal_tail).into()))
     }
 
     #[lua]
@@ -106,7 +104,7 @@ impl Path {
             ));
         };
 
-        Ok(Self(self.0.with_extension(normal_extension)))
+        Ok(Self(self.0.with_extension(normal_extension).into()))
     }
 
     #[lua]
@@ -116,7 +114,9 @@ impl Path {
 
     #[lua(infallible)]
     fn resolve(&self) -> Option<Self> {
-        AbsolutePathBuf::canonicalize(&self.0).map(Self).ok()
+        AbsolutePathBuf::canonicalize(self.0.as_ref())
+            .map(|path| Self(path.into()))
+            .ok()
     }
 
     #[lua(meta, infallible)]

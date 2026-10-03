@@ -3,20 +3,16 @@ use super::link::LinkFactory;
 use super::path::PathFactory;
 use crate::model::AbsolutePath;
 use mlua::prelude::*;
+use std::sync::Arc;
 
-pub fn script_environment(lua: &Lua, script_path: &AbsolutePath) -> LuaResult<LuaTable> {
+pub fn script_environment(lua: &Lua, script_path: Arc<AbsolutePath>) -> LuaResult<LuaTable> {
     let environment = lua.create_table()?;
 
-    environment.set(
-        "Path",
-        PathFactory {
-            script_path: script_path.to_owned(),
-        },
-    )?;
+    environment.set("include", create_include(lua, &script_path)?)?;
+
+    environment.set("Path", PathFactory { script_path })?;
 
     environment.set("Link", LinkFactory)?;
-
-    environment.set("include", create_include(lua, script_path)?)?;
 
     let env_meta = lua.create_table()?;
     env_meta.set("__index", lua.globals())?;

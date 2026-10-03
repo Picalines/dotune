@@ -24,11 +24,11 @@ pub(super) fn create_include(lua: &Lua, script_path: &AbsolutePath) -> LuaResult
             ));
         }
 
-        let mut script_path = script_dir.clone();
-        script_path.push(relative_path);
-        script_path.push(CONFIG_FILE_NAME);
+        let mut child_script_path = script_dir.clone();
+        child_script_path.push(relative_path);
+        child_script_path.push(CONFIG_FILE_NAME);
 
-        let config = execute_config_script(lua, &script_path)?;
+        let config = execute_config_script(lua, child_script_path.into())?;
 
         Ok(Arc::new(config))
     })
