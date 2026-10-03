@@ -1,4 +1,4 @@
-use super::Link;
+use super::link::Link;
 use crate::model::AbsolutePath;
 use mlua::prelude::*;
 use std::sync::Arc;

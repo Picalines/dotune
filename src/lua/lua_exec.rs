@@ -1,4 +1,4 @@
-use super::Config;
+use super::lua_api::Config;
 use super::lua_api::script_environment;
 use crate::cli_args;
 use crate::model::AbsolutePath;
