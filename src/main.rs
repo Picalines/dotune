@@ -9,11 +9,15 @@ use clap::Parser;
 fn main() -> ExitCode {
     let args = cli_args::CliArgs::parse();
 
-    match lua::run_config_scripts(&args) {
-        Ok(()) => ExitCode::SUCCESS,
+    let commands = match lua::run_config_scripts(&args) {
+        Ok(commands) => commands,
         Err(error) => {
             eprintln!("{error}");
-            ExitCode::FAILURE
+            return ExitCode::FAILURE;
         }
-    }
+    };
+
+    dbg!(commands);
+
+    ExitCode::SUCCESS
 }
