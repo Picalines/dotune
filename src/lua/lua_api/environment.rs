@@ -17,6 +17,7 @@ pub fn script_environment(lua: &Lua, script_path: Arc<AbsolutePath>) -> LuaResul
 
     let env_meta = lua.create_table()?;
     env_meta.set("__index", lua.globals())?;
+    env_meta.set("__newindex", lua.globals())?;
     environment.set_metatable(Some(env_meta))?;
 
     Ok(environment)
