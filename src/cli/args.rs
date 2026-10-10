@@ -3,7 +3,7 @@ use clap::Parser;
 use crate::model::{AbsolutePathBuf, RepoPath};
 
 #[derive(Parser)]
-pub struct CliArgs {
+pub struct Args {
     #[arg(short, long = "root", default_value = ".", value_parser = parse_repo_path)]
     pub repo_path: RepoPath,
 }

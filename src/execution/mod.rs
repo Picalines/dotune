@@ -1,4 +1,7 @@
 mod execute;
 mod validate;
 
-pub use validate::{ValidationContext, ValidationError, validate_instructions};
+pub use execute::execute_commands;
+pub use validate::{
+    ValidationContext, ValidationError, ValidationErrorContext, validate_instructions,
+};
