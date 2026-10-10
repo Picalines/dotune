@@ -1,12 +1,12 @@
-use super::lua_api::{Config, ConfigItem};
-use super::lua_exec::execute_root_script;
-use crate::{
-    cli,
-    model::{Instruction, InstructionKind},
-};
-use mlua::prelude::*;
 use std::collections::VecDeque;
 use std::sync::Arc;
+
+use mlua::prelude::*;
+
+use super::lua_api::{Config, ConfigItem};
+use super::lua_exec::execute_root_script;
+use crate::cli;
+use crate::model::{Instruction, InstructionKind};
 
 pub fn run_config_scripts(cli_args: &cli::Args) -> LuaResult<Vec<Instruction>> {
     let lua = Lua::new();

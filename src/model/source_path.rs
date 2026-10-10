@@ -1,10 +1,14 @@
-use crate::model::{AbsolutePath, AbsolutePathBuf};
 use core::ops::Deref;
+use std::io;
+use std::sync::Arc;
+
 use derived_deref::Deref;
-use std::{io, sync::Arc};
 use thiserror::Error;
 
-/// An absolute existing non-symbolic path to something in (or is the) repository
+use crate::model::{AbsolutePath, AbsolutePathBuf};
+
+/// An absolute existing non-symbolic path to something in (or is the)
+/// repository
 #[derive(Clone, Debug)]
 pub struct SourcePath(Arc<AbsolutePath>);
 

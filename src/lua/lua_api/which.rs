@@ -1,6 +1,7 @@
+use mlua::prelude::*;
+
 use super::path::Path;
 use crate::model::AbsolutePathBuf;
-use mlua::prelude::*;
 
 pub fn which(_: &Lua, path: String) -> LuaResult<Option<Path>> {
     match which::which(path) {

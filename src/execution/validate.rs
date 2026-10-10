@@ -1,9 +1,13 @@
+use std::io;
+use std::path::Path;
+use std::sync::Arc;
+
+use thiserror::Error;
+
 use crate::model::{
     AbsolutePath, Command, CommandKind, Instruction, InstructionKind, RepoPath, SourcePath,
     SourcePathError,
 };
-use std::{io, path::Path, sync::Arc};
-use thiserror::Error;
 
 pub struct ValidationContext<'a> {
     pub repo_path: &'a RepoPath,

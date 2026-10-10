@@ -1,10 +1,11 @@
-use super::lua_api::Config;
-use super::lua_api::script_environment;
-use crate::cli;
-use crate::model::AbsolutePath;
-use mlua::prelude::*;
 use std::fs;
 use std::sync::Arc;
+
+use mlua::prelude::*;
+
+use super::lua_api::{Config, script_environment};
+use crate::cli;
+use crate::model::AbsolutePath;
 
 pub const CONFIG_FILE_NAME: &str = ".dotune.lua";
 

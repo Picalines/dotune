@@ -1,10 +1,12 @@
+use std::sync::Arc;
+
+use mlua::prelude::*;
+
 use super::include::create_include;
 use super::link::LinkFactory;
 use super::path::PathFactory;
 use super::which::which;
 use crate::model::AbsolutePath;
-use mlua::prelude::*;
-use std::sync::Arc;
 
 pub fn script_environment(lua: &Lua, script_path: Arc<AbsolutePath>) -> LuaResult<LuaTable> {
     let environment = lua.create_table()?;

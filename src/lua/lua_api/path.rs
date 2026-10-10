@@ -1,10 +1,12 @@
-use super::utils::bad_argument;
-use crate::model::{AbsolutePath, AbsolutePathBuf};
-use itertools::Itertools;
-use mlua::prelude::*;
 use std::env;
 use std::path::{Component, Path as StdPath};
 use std::sync::Arc;
+
+use itertools::Itertools;
+use mlua::prelude::*;
+
+use super::utils::bad_argument;
+use crate::model::{AbsolutePath, AbsolutePathBuf};
 
 #[derive(LuaUserData, FromLua, Clone)]
 pub struct Path(#[lua(skip)] pub Arc<AbsolutePath>);

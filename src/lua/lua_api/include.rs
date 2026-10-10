@@ -1,12 +1,11 @@
-use super::super::lua_exec::CONFIG_FILE_NAME;
-use super::super::lua_exec::execute_config_script;
+use std::path::{Component, Path};
+use std::sync::Arc;
+
+use mlua::prelude::*;
+
+use super::super::lua_exec::{CONFIG_FILE_NAME, execute_config_script};
 use super::utils::bad_argument;
 use crate::model::AbsolutePath;
-use mlua::prelude::*;
-use std::{
-    path::{Component, Path},
-    sync::Arc,
-};
 
 pub(super) fn create_include(lua: &Lua, script_path: &AbsolutePath) -> LuaResult<LuaFunction> {
     let script_dir = script_path

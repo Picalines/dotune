@@ -1,13 +1,12 @@
-use core::{borrow::Borrow, ops::Deref};
-use std::{
-    ffi::OsStr,
-    fs, io,
-    path::{Component, Path, PathBuf},
-    sync::Arc,
-};
+use core::borrow::Borrow;
+use core::ops::Deref;
+use std::ffi::OsStr;
+use std::path::{Component, Path, PathBuf};
+use std::sync::Arc;
+use std::{fs, io};
 
-/// An absolute normalized path. Gives guarantee only about the string - symlinks and existence is
-/// checked elsewhere
+/// An absolute normalized path. Gives guarantee only about the string -
+/// symlinks and existence is checked elsewhere
 #[repr(transparent)]
 #[derive(Debug)]
 pub struct AbsolutePath(Path);
@@ -43,8 +42,8 @@ impl AbsolutePath {
     }
 
     fn from_path(path: &Path) -> &Self {
-        // SAFETY: same as for Path in PathBuf in std, valid as long as layout of Self and Path are
-        // same. Keep repr(transparent) for that to be true
+        // SAFETY: same as for Path in PathBuf in std, valid as long as layout of Self
+        // and Path are same. Keep repr(transparent) for that to be true
         unsafe { &*(path as *const Path as *const Self) }
     }
 }

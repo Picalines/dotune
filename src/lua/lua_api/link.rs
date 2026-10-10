@@ -1,8 +1,10 @@
+use std::sync::Arc;
+
+use mlua::prelude::*;
+
 use super::path::Path;
 use super::utils::bad_argument;
 use crate::model::AbsolutePath;
-use mlua::prelude::*;
-use std::sync::Arc;
 
 #[derive(LuaUserData, Clone, Debug)]
 pub struct Link {

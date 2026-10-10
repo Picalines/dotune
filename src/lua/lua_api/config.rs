@@ -1,7 +1,9 @@
+use std::sync::Arc;
+
+use mlua::prelude::*;
+
 use super::link::Link;
 use crate::model::AbsolutePath;
-use mlua::prelude::*;
-use std::sync::Arc;
 
 #[derive(LuaUserData, Debug)]
 pub struct Config {

@@ -1,5 +1,6 @@
-use super::{AbsolutePath, SourcePath};
 use std::sync::Arc;
+
+use super::{AbsolutePath, SourcePath};
 
 /// An instruction the user gave us in their config. It may not be valid yet
 #[derive(Debug)]
