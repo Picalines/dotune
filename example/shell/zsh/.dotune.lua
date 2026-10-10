@@ -1,12 +1,7 @@
 if not Path.which 'zsh' then
-	return {}
+	return
 end
 
 local zshrc = '.zshrc'
 
-return {
-	Link {
-		Path.here / zshrc,
-		Path.home / zshrc,
-	},
-}
+Dot.link(Path.here / zshrc, Path.home / zshrc)

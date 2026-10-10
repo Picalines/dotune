@@ -1,5 +1,4 @@
 use std::path::{Component, Path};
-use std::sync::Arc;
 
 use mlua::prelude::*;
 
@@ -27,9 +26,7 @@ pub(super) fn create_include(lua: &Lua, script_path: &AbsolutePath) -> LuaResult
         child_script_path.push(relative_path);
         child_script_path.push(CONFIG_FILE_NAME);
 
-        let config = execute_config_script(lua, child_script_path.into())?;
-
-        Ok(Arc::new(config))
+        execute_config_script(lua, child_script_path.into())
     })
 }
 

@@ -1,4 +1,2 @@
-return {
-	include 'bash',
-	include 'zsh',
-}
+include 'bash'
+include 'zsh'

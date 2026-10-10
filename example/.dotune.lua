@@ -1,3 +1,1 @@
-return {
-	include 'shell',
-}
+include 'shell'

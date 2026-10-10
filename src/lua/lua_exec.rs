@@ -3,25 +3,20 @@ use std::sync::Arc;
 
 use mlua::prelude::*;
 
-use super::lua_api::{Config, script_environment};
+use super::lua_api::script_environment;
 use crate::cli;
 use crate::model::AbsolutePath;
 
 pub const CONFIG_FILE_NAME: &str = ".dotune.lua";
 
-pub fn execute_root_script(lua: &Lua, args: &cli::Args) -> LuaResult<Config> {
+pub fn execute_root_script(lua: &Lua, args: &cli::Args) -> LuaResult<()> {
     let root_script_path = args.repo_path.join(CONFIG_FILE_NAME);
     execute_config_script(lua, root_script_path.into())
 }
 
-pub(super) fn execute_config_script(
-    lua: &Lua,
-    script_path: Arc<AbsolutePath>,
-) -> LuaResult<Config> {
-    let script_fn = load_script(lua, script_path.clone())?;
-    let items_table: LuaTable = script_fn.call(())?;
-    let items = Config::items(items_table)?;
-    Ok(Config { script_path, items })
+pub(super) fn execute_config_script(lua: &Lua, script_path: Arc<AbsolutePath>) -> LuaResult<()> {
+    let script_fn = load_script(lua, script_path)?;
+    script_fn.call(())
 }
 
 fn load_script(lua: &Lua, file_path: Arc<AbsolutePath>) -> LuaResult<LuaFunction> {

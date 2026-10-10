@@ -1,12 +1,7 @@
 if not Path.which 'bash' then
-	return {}
+	return
 end
 
-local bashrc = '.bashrc'
+local rc = '.bashrc'
 
-return {
-	Link {
-		Path.here / bashrc,
-		Path.home / bashrc,
-	},
-}
+Dot.link(Path.here / rc, Path.home / rc)
