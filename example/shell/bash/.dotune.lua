@@ -1,4 +1,4 @@
-if not which 'bash' then
+if not Path.which 'bash' then
 	return {}
 end
 

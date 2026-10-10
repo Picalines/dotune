@@ -1,4 +1,4 @@
-if not which 'zsh' then
+if not Path.which 'zsh' then
 	return {}
 end
 

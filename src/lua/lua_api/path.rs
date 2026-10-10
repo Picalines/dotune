@@ -47,6 +47,19 @@ impl PathFactory {
             .map_err(LuaError::external)
     }
 
+    #[lua]
+    fn which(path: &str) -> LuaResult<Option<Path>> {
+        match which::which(path) {
+            Err(which::Error::CannotFindBinaryPath) => Ok(None),
+            Err(error) => Err(LuaError::external(error)),
+            Ok(bin_path) => Ok(Some(Path(
+                AbsolutePathBuf::new(bin_path)
+                    .expect("which should return an absolute path")
+                    .into(),
+            ))),
+        }
+    }
+
     #[lua(meta, infallible)]
     fn __tostring(&self) -> String {
         "<Path>".to_string()
