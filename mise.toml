@@ -1,3 +1,32 @@
+[tools]
+rust = "latest"
+
 [tasks.run]
 alias = "r"
 run = "cargo run -- --root example"
+
+[tasks.verify]
+alias = "v"
+run = [{ task = "format" }, { task = "lint" }, { task = "build" }]
+
+[tasks.build]
+alias = "b"
+run = "cargo build --release"
+
+[tasks.lint]
+alias = "l"
+depends = "lint:*"
+
+[tasks.format]
+alias = "f"
+run = "cargo +nightly fmt"
+
+[tasks."lint:fmt"]
+run = "cargo +nightly fmt --check"
+
+[tasks."lint:clippy"]
+run = "cargo clippy"
+
+[tasks."dev:install"]
+depends = "build"
+run = "mv ./target/release/dotune ~/bin"
