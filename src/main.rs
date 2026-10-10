@@ -3,11 +3,12 @@ mod execution;
 mod lua;
 mod model;
 
-use clap::Parser;
-use execution::{ValidationContext, execute_commands, validate_instructions};
 use std::process::ExitCode;
 
-use crate::cli::print_validation_error;
+use clap::Parser;
+use execution::{ExecutionLog, ValidationContext, execute_commands, validate_instructions};
+
+use crate::cli::{print_execution_log, print_validation_error};
 
 fn main() -> ExitCode {
     let args = cli::Args::parse();
@@ -33,7 +34,15 @@ fn main() -> ExitCode {
         }
     };
 
-    execute_commands(commands);
+    let mut has_errors = false;
+    execute_commands(commands, |log| {
+        has_errors |= matches!(log, ExecutionLog::Error { .. });
+        print_execution_log(log);
+    });
 
-    ExitCode::SUCCESS
+    if has_errors {
+        ExitCode::FAILURE
+    } else {
+        ExitCode::SUCCESS
+    }
 }
