@@ -51,7 +51,18 @@ pub struct ValidationErrorContext {
     pub defined_in: Arc<AbsolutePath>,
 }
 
-pub fn validate(
+pub fn validate_instructions(
+    instructions: impl IntoIterator<Item = Instruction>,
+    context: ValidationContext,
+) -> Result<Vec<Command>, ValidationErrorContext> {
+    // TODO: instructions might conflict with each other
+    instructions
+        .into_iter()
+        .map(|instruction| validate_instruction(&context, instruction))
+        .collect()
+}
+
+fn validate_instruction(
     context: &ValidationContext,
     instruction: Instruction,
 ) -> Result<Command, ValidationErrorContext> {

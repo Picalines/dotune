@@ -4,8 +4,7 @@ mod lua;
 mod model;
 
 use clap::Parser;
-use execution::{ValidationContext, validate};
-use model::Command;
+use execution::{ValidationContext, validate_instructions};
 use std::process::ExitCode;
 
 fn main() -> ExitCode {
@@ -19,29 +18,24 @@ fn main() -> ExitCode {
         }
     };
 
-    let mut exit_code = ExitCode::SUCCESS;
-
-    let mut commands: Vec<Command> = Vec::with_capacity(instructions.len());
-
-    let validation_context = ValidationContext {
-        repo_path: &args.repo_path,
-    };
-
-    for instruction in instructions {
-        match validate(&validation_context, instruction) {
-            Ok(command) => commands.push(command),
-            Err(error) => {
-                exit_code = ExitCode::FAILURE;
-                eprintln!(
-                    "error from {}:\n  {}",
-                    error.defined_in.display(),
-                    error.error
-                );
-            }
+    let commands = match validate_instructions(
+        instructions,
+        ValidationContext {
+            repo_path: &args.repo_path,
+        },
+    ) {
+        Ok(commands) => commands,
+        Err(error_context) => {
+            eprintln!(
+                "error from {}:\n  {}",
+                error_context.defined_in.display(),
+                error_context.error
+            );
+            return ExitCode::FAILURE;
         }
-    }
+    };
 
     dbg!(commands);
 
-    exit_code
+    ExitCode::SUCCESS
 }
