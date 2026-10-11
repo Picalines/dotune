@@ -79,6 +79,15 @@ impl Path {
     }
 
     #[lua]
+    fn to(&self, dir: &Path) -> LuaResult<(Self, Self)> {
+        let file_name = self.0.file_name().ok_or_else(|| {
+            bad_argument("Path.to", 1, Some("self"), "path with a file name expected")
+        })?;
+
+        Ok((self.clone(), Self(dir.0.join(file_name).into())))
+    }
+
+    #[lua]
     fn with_tail(&self, tail: &str) -> LuaResult<Self> {
         let Ok(Component::Normal(normal_tail)) = StdPath::new(tail).components().exactly_one()
         else {
