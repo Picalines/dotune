@@ -2,8 +2,10 @@ use clap::Parser;
 
 use crate::model::{AbsolutePathBuf, RepoPath};
 
+/// Manage dotfiles with Lua scripts
 #[derive(Parser)]
 pub struct Args {
+    /// Dotfile repository containing .dotune.lua
     #[arg(short, long = "root", default_value = ".", value_parser = parse_repo_path)]
     pub repo_path: RepoPath,
 }
