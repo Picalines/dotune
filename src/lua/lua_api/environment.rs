@@ -4,6 +4,7 @@ use mlua::prelude::*;
 
 use super::dot::Dot;
 use super::include::create_include;
+use super::os::Os;
 use super::path::PathFactory;
 use crate::model::AbsolutePath;
 
@@ -16,6 +17,8 @@ pub fn script_environment(lua: &Lua, script_path: Arc<AbsolutePath>) -> LuaResul
     environment.set("Dot", Dot::new(lua, script_path.clone())?)?;
 
     environment.set("Path", PathFactory { script_path })?;
+
+    environment.set("OS", Os)?;
 
     let env_meta = lua.create_table()?;
     env_meta.set("__index", lua.globals())?;
