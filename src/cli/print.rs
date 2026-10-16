@@ -13,8 +13,8 @@ pub fn print_execution_log(log: ExecutionLog) {
         ExecutionLog::DirectoryCreated(path) => {
             println!("created {}", path.display());
         }
-        ExecutionLog::SymlinkRemoved(path) => {
-            println!("unlinked {}", path.display());
+        ExecutionLog::PathDeleted(path) => {
+            println!("deleted {}", path.display());
         }
         ExecutionLog::SymlinkCreated {
             source_path,
@@ -26,15 +26,27 @@ pub fn print_execution_log(log: ExecutionLog) {
                 destination_path.display()
             );
         }
+        ExecutionLog::Copied {
+            source_path,
+            destination_path,
+        } => {
+            println!(
+                "copied {} -> {}",
+                source_path.display(),
+                destination_path.display()
+            );
+        }
         ExecutionLog::Error {
+            operation,
             error,
             defined_in,
             source_path,
             destination_path,
         } => {
             eprintln!(
-                "error from {}:\n  could not link {} -> {}: {}",
+                "error from {}:\n  could not {} {} -> {}: {}",
                 defined_in.display(),
+                operation,
                 source_path.display(),
                 destination_path.display(),
                 error

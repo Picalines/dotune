@@ -15,6 +15,10 @@ pub enum InstructionKind {
         source_path: Arc<AbsolutePath>,
         destination_path: Arc<AbsolutePath>,
     },
+    Copy {
+        source_path: Arc<AbsolutePath>,
+        destination_path: Arc<AbsolutePath>,
+    },
 }
 
 /// A command that we derived from an [`Instruction`], ready for execution
@@ -27,6 +31,10 @@ pub struct Command {
 #[derive(Debug)]
 pub enum CommandKind {
     Link {
+        source_path: SourcePath,
+        destination_path: Arc<AbsolutePath>,
+    },
+    Copy {
         source_path: SourcePath,
         destination_path: Arc<AbsolutePath>,
     },

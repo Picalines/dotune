@@ -1,5 +1,6 @@
 use core::ops::Deref;
 use std::io;
+use std::path::Path;
 use std::sync::Arc;
 
 use derived_deref::Deref;
@@ -105,5 +106,17 @@ impl Deref for SourcePath {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+impl AsRef<Path> for SourcePath {
+    fn as_ref(&self) -> &Path {
+        self.deref().as_ref()
+    }
+}
+
+impl AsRef<Path> for RepoPath {
+    fn as_ref(&self) -> &Path {
+        self.deref().as_ref()
     }
 }

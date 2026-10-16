@@ -1,42 +1,23 @@
-#[cfg(windows)]
-use std::path::Path;
 use std::sync::Arc;
-use std::{fs, io};
-#[cfg(unix)]
-use std::{fs::remove_file as remove_symlink, os::unix::fs::symlink as create_symlink};
 
-use thiserror::Error;
-
+use super::abs_fs::{self, FsError};
 use crate::model::{AbsolutePath, Command, CommandKind, SourcePath};
-
-#[derive(Error, Debug)]
-pub enum ExecutionError {
-    #[error("could not create directory {}: {error}", .path.display())]
-    CreateDirectory {
-        path: Arc<AbsolutePath>,
-        #[source]
-        error: io::Error,
-    },
-    #[error("target already exists and will not be overwritten")]
-    OverwriteConflict,
-    #[error("could not remove existing symlink: {0}")]
-    RemoveSymlink(#[source] io::Error),
-    #[error("could not create symlink: {0}")]
-    CreateSymlink(#[source] io::Error),
-    #[error(transparent)]
-    Io(#[from] io::Error),
-}
 
 #[derive(Debug)]
 pub enum ExecutionLog {
     DirectoryCreated(Arc<AbsolutePath>),
-    SymlinkRemoved(Arc<AbsolutePath>),
+    PathDeleted(Arc<AbsolutePath>),
     SymlinkCreated {
         source_path: SourcePath,
         destination_path: Arc<AbsolutePath>,
     },
+    Copied {
+        source_path: SourcePath,
+        destination_path: Arc<AbsolutePath>,
+    },
     Error {
-        error: ExecutionError,
+        operation: &'static str,
+        error: FsError,
         defined_in: Arc<AbsolutePath>,
         source_path: SourcePath,
         destination_path: Arc<AbsolutePath>,
@@ -48,20 +29,30 @@ pub fn execute_commands(
     mut log: impl FnMut(ExecutionLog),
 ) {
     for command in commands {
-        match command.kind {
+        let (operation, source_path, destination_path, result) = match command.kind {
             CommandKind::Link {
                 source_path,
                 destination_path,
             } => {
-                if let Err(error) = execute_link(&source_path, &destination_path, &mut log) {
-                    log(ExecutionLog::Error {
-                        error,
-                        defined_in: command.defined_in,
-                        source_path,
-                        destination_path,
-                    });
-                }
+                let result = execute_link(&source_path, &destination_path, &mut log);
+                ("link", source_path, destination_path, result)
             }
+            CommandKind::Copy {
+                source_path,
+                destination_path,
+            } => {
+                let result = execute_copy(&source_path, &destination_path, &mut log);
+                ("copy", source_path, destination_path, result)
+            }
+        };
+        if let Err(error) = result {
+            log(ExecutionLog::Error {
+                operation,
+                error,
+                defined_in: command.defined_in,
+                source_path,
+                destination_path,
+            });
         }
     }
 }
@@ -70,31 +61,26 @@ fn execute_link(
     source_path: &SourcePath,
     destination_path: &AbsolutePath,
     log: &mut impl FnMut(ExecutionLog),
-) -> Result<(), ExecutionError> {
-    let parent = destination_path
-        .parent()
-        .expect("validated link destination has a parent directory");
-
-    let parent_existed = parent.is_dir();
-    fs::create_dir_all(parent).map_err(|error| ExecutionError::CreateDirectory {
-        path: parent.into(),
-        error,
-    })?;
-    if !parent_existed {
+) -> Result<(), FsError> {
+    if let Some(parent) = abs_fs::create_parent_dir(destination_path)? {
         log(ExecutionLog::DirectoryCreated(parent.into()));
     }
 
-    match fs::symlink_metadata(destination_path) {
-        Ok(metadata) if metadata.is_symlink() => {
-            remove_symlink(destination_path).map_err(ExecutionError::RemoveSymlink)?;
-            log(ExecutionLog::SymlinkRemoved(destination_path.into()));
-        }
-        Ok(_) => return Err(ExecutionError::OverwriteConflict),
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-        Err(error) => return Err(error.into()),
+    if let Some(metadata) = abs_fs::symlink_metadata_if_exists(destination_path)?
+        && metadata.is_symlink()
+    {
+        abs_fs::remove_path(destination_path, metadata.file_type())?;
+        log(ExecutionLog::PathDeleted(destination_path.into()));
     }
 
-    create_symlink(&**source_path, destination_path).map_err(ExecutionError::CreateSymlink)?;
+    abs_fs::create_symlink(
+        source_path,
+        destination_path,
+        source_path
+            .metadata()
+            .map_err(|error| FsError::Io(source_path.to_path_buf(), error))?
+            .file_type(),
+    )?;
 
     log(ExecutionLog::SymlinkCreated {
         source_path: source_path.clone(),
@@ -103,24 +89,18 @@ fn execute_link(
     Ok(())
 }
 
-#[cfg(windows)]
-fn create_symlink(source_path: &Path, destination_path: &Path) -> io::Result<()> {
-    use std::os::windows::fs::{symlink_dir, symlink_file};
-
-    if source_path.metadata()?.is_dir() {
-        symlink_dir(source_path, destination_path)
-    } else {
-        symlink_file(source_path, destination_path)
+fn execute_copy(
+    source_path: &SourcePath,
+    destination_path: &AbsolutePath,
+    log: &mut impl FnMut(ExecutionLog),
+) -> Result<(), FsError> {
+    if let Some(parent) = abs_fs::create_parent_dir(destination_path)? {
+        log(ExecutionLog::DirectoryCreated(parent.into()));
     }
-}
-
-#[cfg(windows)]
-fn remove_symlink(path: &Path) -> io::Result<()> {
-    use std::os::windows::fs::FileTypeExt;
-
-    if path.symlink_metadata()?.file_type().is_symlink_dir() {
-        fs::remove_dir(path)
-    } else {
-        fs::remove_file(path)
-    }
+    abs_fs::copy_overlay(source_path, destination_path)?;
+    log(ExecutionLog::Copied {
+        source_path: source_path.clone(),
+        destination_path: destination_path.into(),
+    });
+    Ok(())
 }

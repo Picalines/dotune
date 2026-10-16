@@ -1,12 +1,12 @@
-use std::io;
 use std::path::Path;
 use std::sync::Arc;
 
 use thiserror::Error;
 
+use super::abs_fs::{self, FsError};
 use crate::model::{
-    AbsolutePath, Command, CommandKind, Instruction, InstructionKind, RepoPath, SourcePath,
-    SourcePathError,
+    AbsolutePath, AbsolutePathBuf, Command, CommandKind, Instruction, InstructionKind, RepoPath,
+    SourcePath, SourcePathError,
 };
 
 pub struct ValidationContext<'a> {
@@ -21,32 +21,14 @@ pub enum ValidationError {
         #[source]
         error: SourcePathError,
     },
-    #[error("a path in the repository cannot be a target: {}", .path.display())]
-    WriteToRepo { path: Arc<AbsolutePath> },
+    #[error("an operation would have overwritten the repository: {}", .0.display())]
+    WriteToRepo(Arc<AbsolutePath>),
     #[error("filesystem root cannot be a target")]
     WriteToRoot,
     #[error("path exists: {}", .path.display())]
     OverwriteConflict { path: Arc<AbsolutePath> },
-    #[error(
-        "malformed path '{}': '{}' is not a directory",
-        .user_path.display(),
-        .not_dir_path.display()
-    )]
-    MalformedDirPath {
-        user_path: Arc<AbsolutePath>,
-        not_dir_path: Arc<AbsolutePath>,
-    },
-    #[error(
-        "malformed path '{}': '{}' is a broken symlink",
-        .user_path.display(),
-        .symlink_path.display()
-    )]
-    BrokenDirSymlink {
-        user_path: Arc<AbsolutePath>,
-        symlink_path: Arc<AbsolutePath>,
-    },
     #[error(transparent)]
-    Io(#[from] io::Error),
+    Fs(#[from] FsError),
 }
 
 #[derive(Debug)]
@@ -75,14 +57,19 @@ fn validate_instruction(
         defined_in: instruction.defined_in.clone(),
     };
 
-    let kind = match instruction.kind {
-        InstructionKind::Link {
-            source_path,
-            destination_path,
-        } => {
-            validate_link(context.repo_path, source_path, destination_path).map_err(with_context)?
-        }
-    };
+    let kind =
+        match instruction.kind {
+            InstructionKind::Link {
+                source_path,
+                destination_path,
+            } => validate_link(context.repo_path, source_path, destination_path)
+                .map_err(with_context)?,
+            InstructionKind::Copy {
+                source_path,
+                destination_path,
+            } => validate_copy(context.repo_path, source_path, destination_path)
+                .map_err(with_context)?,
+        };
 
     Ok(Command {
         defined_in: instruction.defined_in,
@@ -97,7 +84,40 @@ fn validate_link(
 ) -> Result<CommandKind, ValidationError> {
     let source_path = validate_source(repo_path, source_path)?;
     validate_destination(repo_path, &destination_path)?;
+    if abs_fs::symlink_metadata_if_exists(&destination_path)?
+        .is_some_and(|metadata| !metadata.is_symlink())
+    {
+        return Err(ValidationError::OverwriteConflict {
+            path: destination_path,
+        });
+    }
     Ok(CommandKind::Link {
+        source_path,
+        destination_path,
+    })
+}
+
+fn validate_copy(
+    repo_path: &RepoPath,
+    source_path: Arc<AbsolutePath>,
+    destination_path: Arc<AbsolutePath>,
+) -> Result<CommandKind, ValidationError> {
+    let source_path = validate_source(repo_path, source_path)?;
+    let resolved_destination = validate_destination(repo_path, &destination_path)?;
+
+    if repo_path.starts_with(&resolved_destination) {
+        for entry in abs_fs::iter_tree(&source_path) {
+            let (relative_path, metadata) = entry?;
+            let target = resolved_destination.join(relative_path);
+            if target.starts_with(repo_path)
+                || (repo_path.starts_with(&target) && !metadata.is_dir())
+            {
+                return Err(ValidationError::WriteToRepo(target.into()));
+            }
+        }
+    }
+
+    Ok(CommandKind::Copy {
         source_path,
         destination_path,
     })
@@ -119,72 +139,26 @@ fn validate_source(
 fn validate_destination(
     repo_path: &RepoPath,
     destination_path: &AbsolutePath,
-) -> Result<(), ValidationError> {
+) -> Result<AbsolutePathBuf, ValidationError> {
     let repo_path: &Path = repo_path;
 
     if destination_path.starts_with(repo_path) {
-        return Err(ValidationError::WriteToRepo {
-            path: destination_path.into(),
-        });
+        return Err(ValidationError::WriteToRepo(destination_path.into()));
     }
 
-    let existing_parent = find_existing_parent(destination_path)?;
+    let destination_parent = destination_path
+        .parent()
+        .ok_or(ValidationError::WriteToRoot)?;
 
-    let parent_metadata = match existing_parent.metadata() {
-        Ok(metadata) => metadata,
-        Err(error)
-            if matches!(
-                error.kind(),
-                io::ErrorKind::NotFound | io::ErrorKind::NotADirectory
-            ) =>
-        {
-            return Err(ValidationError::BrokenDirSymlink {
-                user_path: destination_path.into(),
-                symlink_path: existing_parent.into(),
-            });
-        }
-        Err(error) => return Err(error.into()),
-    };
+    let resolved_destination = abs_fs::resolve_partially_existing_path(destination_parent)?.join(
+        destination_path
+            .file_name()
+            .expect("non-root absolute path has a file name"),
+    );
 
-    if !parent_metadata.is_dir() {
-        return Err(ValidationError::MalformedDirPath {
-            user_path: destination_path.into(),
-            not_dir_path: existing_parent.into(),
-        });
+    if resolved_destination.starts_with(repo_path) {
+        return Err(ValidationError::WriteToRepo(destination_path.into()));
     }
 
-    let resolved_parent = existing_parent.canonicalize()?;
-    if resolved_parent.starts_with(repo_path) {
-        return Err(ValidationError::WriteToRepo {
-            path: destination_path.into(),
-        });
-    }
-
-    match destination_path.symlink_metadata() {
-        Ok(metadata) if metadata.is_symlink() => Ok(()),
-        Ok(_) => Err(ValidationError::OverwriteConflict {
-            path: destination_path.into(),
-        }),
-        Err(error) if matches!(error.kind(), io::ErrorKind::NotFound) => Ok(()),
-        Err(error) => Err(error.into()),
-    }
-}
-
-fn find_existing_parent(path: &AbsolutePath) -> Result<&AbsolutePath, ValidationError> {
-    let mut parent = path.parent().ok_or(ValidationError::WriteToRoot)?;
-
-    loop {
-        match parent.symlink_metadata() {
-            Ok(_) => return Ok(parent),
-            Err(error)
-                if matches!(
-                    error.kind(),
-                    io::ErrorKind::NotFound | io::ErrorKind::NotADirectory
-                ) =>
-            {
-                parent = parent.parent().ok_or(error)?;
-            }
-            Err(error) => return Err(error.into()),
-        }
-    }
+    Ok(resolved_destination)
 }
