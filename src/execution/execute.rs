@@ -18,7 +18,6 @@ pub enum ExecutionLog {
     Error {
         operation: &'static str,
         error: FsError,
-        defined_in: Arc<AbsolutePath>,
         source_path: SourcePath,
         destination_path: Arc<AbsolutePath>,
     },
@@ -26,30 +25,31 @@ pub enum ExecutionLog {
 
 pub fn execute_commands(
     commands: impl IntoIterator<Item = Command>,
-    mut log: impl FnMut(ExecutionLog),
+    mut log: impl FnMut(&AbsolutePath, ExecutionLog),
 ) {
     for command in commands {
+        let mut command_log = |entry| log(&command.defined_in, entry);
+
         let (operation, source_path, destination_path, result) = match command.kind {
             CommandKind::Link {
                 source_path,
                 destination_path,
             } => {
-                let result = execute_link(&source_path, &destination_path, &mut log);
+                let result = execute_link(&source_path, &destination_path, &mut command_log);
                 ("link", source_path, destination_path, result)
             }
             CommandKind::Copy {
                 source_path,
                 destination_path,
             } => {
-                let result = execute_copy(&source_path, &destination_path, &mut log);
+                let result = execute_copy(&source_path, &destination_path, &mut command_log);
                 ("copy", source_path, destination_path, result)
             }
         };
         if let Err(error) = result {
-            log(ExecutionLog::Error {
+            command_log(ExecutionLog::Error {
                 operation,
                 error,
-                defined_in: command.defined_in,
                 source_path,
                 destination_path,
             });

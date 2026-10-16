@@ -9,7 +9,7 @@ use std::sync::Arc;
 use clap::Parser;
 use execution::{ExecutionLog, ValidationContext, execute_commands, validate_instructions};
 
-use crate::cli::{print_execution_log, print_validation_error};
+use crate::cli::Printer;
 use crate::model::SystemInfo;
 
 fn main() -> ExitCode {
@@ -17,10 +17,13 @@ fn main() -> ExitCode {
 
     let system_info = Arc::new(SystemInfo::detect());
 
+    let mut printer = Printer::new(system_info.clone());
+
     let instructions = match lua::run_config_scripts(&args, system_info) {
         Ok(instructions) => instructions,
         Err(error) => {
-            eprintln!("{error}");
+            // TODO: nice file path to a script?
+            printer.print_error(error);
             return ExitCode::FAILURE;
         }
     };
@@ -33,15 +36,15 @@ fn main() -> ExitCode {
     ) {
         Ok(commands) => commands,
         Err(error_context) => {
-            print_validation_error(error_context);
+            printer.print_validation_error(error_context);
             return ExitCode::FAILURE;
         }
     };
 
     let mut has_errors = false;
-    execute_commands(commands, |log| {
+    execute_commands(commands, |defined_in, log| {
         has_errors |= matches!(log, ExecutionLog::Error { .. });
-        print_execution_log(log);
+        printer.print_execution_log(defined_in, log);
     });
 
     if has_errors {

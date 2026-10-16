@@ -8,6 +8,7 @@ use super::{AbsolutePath, AbsolutePathBuf};
 pub struct SystemInfo {
     pub os: &'static str,
     pub is_unix: bool,
+    pub cwd: Arc<AbsolutePath>,
     pub home: Arc<AbsolutePath>,
     pub root: Arc<AbsolutePath>,
     pub windows: WindowsPaths,
@@ -38,6 +39,10 @@ pub struct XdgPaths {
 
 impl SystemInfo {
     pub fn detect() -> Self {
+        let cwd = env::current_dir().expect("could not determine the current directory");
+        let cwd = AbsolutePathBuf::new(cwd)
+            .expect("current directory must be an absolute path without indirection");
+
         let home = env::home_dir().expect("could not determine the home directory");
         let home = AbsolutePathBuf::new(home)
             .expect("home directory must be an absolute path without indirection");
@@ -70,6 +75,7 @@ impl SystemInfo {
         Self {
             os: env::consts::OS,
             is_unix: cfg!(unix),
+            cwd: cwd.into(),
             home: home.into(),
             root,
             windows,
