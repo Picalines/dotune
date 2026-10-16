@@ -4,16 +4,20 @@ mod lua;
 mod model;
 
 use std::process::ExitCode;
+use std::sync::Arc;
 
 use clap::Parser;
 use execution::{ExecutionLog, ValidationContext, execute_commands, validate_instructions};
 
 use crate::cli::{print_execution_log, print_validation_error};
+use crate::model::SystemInfo;
 
 fn main() -> ExitCode {
     let args = cli::Args::parse();
 
-    let instructions = match lua::run_config_scripts(&args) {
+    let system_info = Arc::new(SystemInfo::detect());
+
+    let instructions = match lua::run_config_scripts(&args, system_info) {
         Ok(instructions) => instructions,
         Err(error) => {
             eprintln!("{error}");

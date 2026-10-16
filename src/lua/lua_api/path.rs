@@ -1,4 +1,3 @@
-use std::env;
 use std::path::{Component, Path as StdPath};
 use std::sync::Arc;
 
@@ -6,7 +5,7 @@ use itertools::Itertools;
 use mlua::prelude::*;
 
 use super::utils::bad_argument;
-use crate::model::{AbsolutePath, AbsolutePathBuf};
+use crate::model::{AbsolutePath, AbsolutePathBuf, SystemInfo};
 
 #[derive(LuaUserData, FromLua, Clone)]
 pub struct Path(#[lua(skip)] pub Arc<AbsolutePath>);
@@ -15,6 +14,8 @@ pub struct Path(#[lua(skip)] pub Arc<AbsolutePath>);
 pub struct PathFactory {
     #[lua(skip)]
     pub script_path: Arc<AbsolutePath>,
+    #[lua(skip)]
+    pub system_info: Arc<SystemInfo>,
 }
 
 #[mlua::userdata_impl]
@@ -37,14 +38,14 @@ impl PathFactory {
         self.script_dir()
     }
 
-    #[lua(getter)]
-    fn home(&self) -> LuaResult<Path> {
-        // TODO: cache
-        let home_path = env::home_dir()
-            .ok_or_else(|| LuaError::external("could not determine the home directory"))?;
-        AbsolutePathBuf::canonicalize(home_path)
-            .map(|abs_home_path| Path(abs_home_path.into()))
-            .map_err(LuaError::external)
+    #[lua(getter, infallible)]
+    fn home(&self) -> Path {
+        Path(self.system_info.home.clone())
+    }
+
+    #[lua(getter, infallible)]
+    fn root(&self) -> Path {
+        Path(self.system_info.root.clone())
     }
 
     #[lua]

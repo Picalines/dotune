@@ -1,12 +1,17 @@
 use std::path::{Component, Path};
+use std::sync::Arc;
 
 use mlua::prelude::*;
 
 use super::super::lua_exec::{CONFIG_FILE_NAME, execute_config_script};
 use super::utils::bad_argument;
-use crate::model::AbsolutePath;
+use crate::model::{AbsolutePath, SystemInfo};
 
-pub(super) fn create_include(lua: &Lua, script_path: &AbsolutePath) -> LuaResult<LuaFunction> {
+pub(super) fn create_include(
+    lua: &Lua,
+    script_path: &AbsolutePath,
+    system_info: Arc<SystemInfo>,
+) -> LuaResult<LuaFunction> {
     let script_dir = script_path
         .parent()
         .expect("script should be in some directory")
@@ -26,7 +31,7 @@ pub(super) fn create_include(lua: &Lua, script_path: &AbsolutePath) -> LuaResult
         child_script_path.push(relative_path);
         child_script_path.push(CONFIG_FILE_NAME);
 
-        execute_config_script(lua, child_script_path.into())
+        execute_config_script(lua, child_script_path.into(), system_info.clone())
     })
 }
 
