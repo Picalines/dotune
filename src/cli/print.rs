@@ -52,6 +52,18 @@ impl Printer {
                     self.display_path(&destination_path)
                 );
             }
+            ExecutionLog::SymlinkRecreated {
+                source_path,
+                destination_path,
+            } => {
+                println!(
+                    "{} {} {} {}",
+                    Label::Relinked,
+                    self.display_path(&source_path),
+                    Label::Arrow,
+                    self.display_path(&destination_path)
+                );
+            }
             ExecutionLog::Copied {
                 source_path,
                 destination_path,
@@ -116,6 +128,7 @@ impl Printer {
 
 enum Label {
     Linked,
+    Relinked,
     Copied, // TODO: would be correct to tell "copied over" for dirs
     Deleted,
     Created,
@@ -127,7 +140,8 @@ enum Label {
 impl fmt::Display for Label {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         let label = match self {
-            Self::Linked => "ln".blue(),
+            Self::Linked => "ln".purple(),
+            Self::Relinked => "ln".blue(),
             Self::Copied => "cp".yellow(),
             Self::Deleted => "rm".yellow(),
             Self::Created => "mkdir".purple(),

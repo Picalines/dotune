@@ -11,6 +11,10 @@ pub enum ExecutionLog {
         source_path: SourcePath,
         destination_path: Arc<AbsolutePath>,
     },
+    SymlinkRecreated {
+        source_path: SourcePath,
+        destination_path: Arc<AbsolutePath>,
+    },
     Copied {
         source_path: SourcePath,
         destination_path: Arc<AbsolutePath>,
@@ -66,26 +70,42 @@ fn execute_link(
         log(ExecutionLog::DirectoryCreated(parent.into()));
     }
 
-    if let Some(metadata) = abs_fs::symlink_metadata_if_exists(destination_path)?
+    let existing_removed = if let Some(metadata) =
+        abs_fs::symlink_metadata_if_exists(destination_path)?
         && metadata.is_symlink()
     {
         abs_fs::remove_path(destination_path, metadata.file_type())?;
-        log(ExecutionLog::PathDeleted(destination_path.into()));
+        true
+    } else {
+        false
+    };
+
+    let create_result = source_path
+        .metadata()
+        .map_err(|error| FsError::Io(source_path.to_path_buf(), error))
+        .and_then(|metadata| {
+            abs_fs::create_symlink(source_path, destination_path, metadata.file_type())
+        });
+
+    if let Err(error) = create_result {
+        if existing_removed {
+            log(ExecutionLog::PathDeleted(destination_path.into()));
+        }
+        return Err(error);
     }
 
-    abs_fs::create_symlink(
-        source_path,
-        destination_path,
-        source_path
-            .metadata()
-            .map_err(|error| FsError::Io(source_path.to_path_buf(), error))?
-            .file_type(),
-    )?;
-
-    log(ExecutionLog::SymlinkCreated {
-        source_path: source_path.clone(),
-        destination_path: destination_path.into(),
+    log(if existing_removed {
+        ExecutionLog::SymlinkRecreated {
+            source_path: source_path.clone(),
+            destination_path: destination_path.into(),
+        }
+    } else {
+        ExecutionLog::SymlinkCreated {
+            source_path: source_path.clone(),
+            destination_path: destination_path.into(),
+        }
     });
+
     Ok(())
 }
 
