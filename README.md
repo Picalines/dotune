@@ -129,7 +129,7 @@ local config = OS.match {
 
 ### Platform paths
 
-(Some paths are missing, I didn't go through all this)
+(Not all paths are defined yet, more like a proof of concept for now)
 
 #### Windows
 
