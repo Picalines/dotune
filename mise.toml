@@ -1,5 +1,9 @@
 [tools]
-rust = "latest"
+rust = ["latest", "nightly"]
+
+[tasks.publish]
+depends = "lint"
+run = "cargo publish"
 
 [tasks.run]
 alias = "r"

@@ -1,0 +1,46 @@
+name: Publish to crates.io
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install mise
+        uses: jdx/mise-action@v4
+
+      - name: Check version tag
+        id: version
+        shell: bash
+        run: |
+          version=$(cargo metadata --no-deps --format-version 1 --locked | jq -r '.packages[0].version')
+          tag="v$version"
+          if git show-ref --verify --quiet "refs/tags/$tag"; then
+            echo "$tag is already released."
+          else
+            echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare Rust cache
+        if: steps.version.outputs.tag != ''
+        uses: Swatinem/rust-cache@v2
+
+      - name: Publish and tag
+        if: steps.version.outputs.tag != ''
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          RELEASE_TAG: ${{ steps.version.outputs.tag }}
+        shell: bash
+        run: |
+          mise run publish
+          git tag "$RELEASE_TAG"
+          git push origin "refs/tags/$RELEASE_TAG"
