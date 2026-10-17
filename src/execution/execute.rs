@@ -29,6 +29,7 @@ pub enum ExecutionLog {
 
 pub fn execute_commands(
     commands: impl IntoIterator<Item = Command>,
+    dry_run: bool,
     mut log: impl FnMut(&AbsolutePath, ExecutionLog),
 ) {
     for command in commands {
@@ -39,14 +40,16 @@ pub fn execute_commands(
                 source_path,
                 destination_path,
             } => {
-                let result = execute_link(&source_path, &destination_path, &mut command_log);
+                let result =
+                    execute_link(&source_path, &destination_path, dry_run, &mut command_log);
                 ("link", source_path, destination_path, result)
             }
             CommandKind::Copy {
                 source_path,
                 destination_path,
             } => {
-                let result = execute_copy(&source_path, &destination_path, &mut command_log);
+                let result =
+                    execute_copy(&source_path, &destination_path, dry_run, &mut command_log);
                 ("copy", source_path, destination_path, result)
             }
         };
@@ -64,17 +67,18 @@ pub fn execute_commands(
 fn execute_link(
     source_path: &SourcePath,
     destination_path: &AbsolutePath,
+    dry_run: bool,
     log: &mut impl FnMut(ExecutionLog),
 ) -> Result<(), FsError> {
-    if let Some(parent) = abs_fs::create_parent_dir(destination_path)? {
-        log(ExecutionLog::DirectoryCreated(parent.into()));
-    }
+    create_parent_dir(destination_path, dry_run, log)?;
 
-    let existing_removed = if let Some(metadata) =
+    let replacing_symlink = if let Some(metadata) =
         abs_fs::symlink_metadata_if_exists(destination_path)?
         && metadata.is_symlink()
     {
-        abs_fs::remove_path(destination_path, metadata.file_type())?;
+        if !dry_run {
+            abs_fs::remove_path(destination_path, metadata.file_type())?;
+        }
         true
     } else {
         false
@@ -84,17 +88,21 @@ fn execute_link(
         .metadata()
         .map_err(|error| FsError::Io(source_path.to_path_buf(), error))
         .and_then(|metadata| {
-            abs_fs::create_symlink(source_path, destination_path, metadata.file_type())
+            if dry_run {
+                Ok(())
+            } else {
+                abs_fs::create_symlink(source_path, destination_path, metadata.file_type())
+            }
         });
 
     if let Err(error) = create_result {
-        if existing_removed {
+        if !dry_run && replacing_symlink {
             log(ExecutionLog::PathDeleted(destination_path.into()));
         }
         return Err(error);
     }
 
-    log(if existing_removed {
+    log(if replacing_symlink {
         ExecutionLog::SymlinkRecreated {
             source_path: source_path.clone(),
             destination_path: destination_path.into(),
@@ -112,15 +120,32 @@ fn execute_link(
 fn execute_copy(
     source_path: &SourcePath,
     destination_path: &AbsolutePath,
+    dry_run: bool,
     log: &mut impl FnMut(ExecutionLog),
 ) -> Result<(), FsError> {
-    if let Some(parent) = abs_fs::create_parent_dir(destination_path)? {
-        log(ExecutionLog::DirectoryCreated(parent.into()));
+    create_parent_dir(destination_path, dry_run, log)?;
+    if !dry_run {
+        abs_fs::copy_overlay(source_path, destination_path)?;
     }
-    abs_fs::copy_overlay(source_path, destination_path)?;
     log(ExecutionLog::Copied {
         source_path: source_path.clone(),
         destination_path: destination_path.into(),
     });
+    Ok(())
+}
+
+fn create_parent_dir(
+    destination_path: &AbsolutePath,
+    dry_run: bool,
+    log: &mut impl FnMut(ExecutionLog),
+) -> Result<(), FsError> {
+    let parent = if dry_run {
+        destination_path.parent().filter(|parent| !parent.is_dir())
+    } else {
+        abs_fs::create_parent_dir(destination_path)?
+    };
+    if let Some(parent) = parent {
+        log(ExecutionLog::DirectoryCreated(parent.into()));
+    }
     Ok(())
 }

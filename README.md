@@ -45,6 +45,7 @@ dotune -r ~/Repos/dotfiles
 dotune --help        # Show usage and options
 dotune               # Apply .dotune.lua in the current directory
 dotune --root <dir>  # Use another repository folder
+dotune --dry-run     # Don't apply write operations to the file system
 ```
 
 ## Lua API

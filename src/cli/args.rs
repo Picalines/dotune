@@ -6,8 +6,12 @@ use crate::model::{AbsolutePathBuf, RepoPath};
 #[derive(Parser)]
 pub struct Args {
     /// Dotfile repository containing .dotune.lua
-    #[arg(short, long = "root", default_value = ".", value_parser = parse_repo_path)]
+    #[arg(long = "root", short = 'r', default_value = ".", value_parser = parse_repo_path)]
     pub repo_path: RepoPath,
+
+    /// Don't apply write operations to the file system
+    #[arg(long, short = 'n')]
+    pub dry_run: bool,
 }
 
 fn parse_repo_path(path_arg: &str) -> Result<RepoPath, String> {

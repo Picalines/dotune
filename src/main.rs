@@ -42,7 +42,7 @@ fn main() -> ExitCode {
     };
 
     let mut has_errors = false;
-    execute_commands(commands, |defined_in, log| {
+    execute_commands(commands, args.dry_run, |defined_in, log| {
         has_errors |= matches!(log, ExecutionLog::Error { .. });
         printer.print_execution_log(defined_in, log);
     });
