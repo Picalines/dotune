@@ -10,9 +10,10 @@ pub fn run_config_scripts(
     cli_args: &cli::Args,
     system_info: Arc<SystemInfo>,
 ) -> LuaResult<Vec<Instruction>> {
-    let lua = Lua::new();
-
-    lua.load_std_libs(LuaStdLib::ALL_SAFE)?;
+    let lua = Lua::new_with(
+        LuaStdLib::STRING | LuaStdLib::TABLE | LuaStdLib::UTF8,
+        LuaOptions::default(),
+    )?;
 
     lua.set_app_data(Vec::<Instruction>::new());
 

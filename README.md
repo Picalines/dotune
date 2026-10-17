@@ -50,6 +50,10 @@ dotune --dry-run  # Don't apply write operations to the file system
 
 ## Lua API
 
+### Standard library
+
+Lua scripts have access to very basic parts of standard library: `print`, `string`, `table` and `utf8`. More complicated stuff like file I/O and environment access are disabled
+
 ### include
 
 ```lua

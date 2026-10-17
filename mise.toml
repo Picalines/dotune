@@ -5,10 +5,6 @@ rust = { version = "1.98", components = ["clippy", "rustfmt"] }
 depends = "lint"
 run = "cargo publish"
 
-[tasks.run]
-alias = "r"
-run = "cargo run -- --dry-run example"
-
 [tasks.verify]
 alias = "v"
 run = [{ task = "format" }, { task = "lint" }, { task = "build" }]
@@ -31,6 +27,13 @@ run = "cargo fmt --check"
 [tasks."lint:clippy"]
 run = "cargo clippy"
 
+[tasks."dev:build"]
+run = "cargo build"
+
+[tasks."dev:run"]
+alias = "r"
+run = "cargo run -- --dry-run example"
+
 [tasks."dev:install"]
-depends = "build"
+depends = "dev:build"
 run = "mv ./target/release/dotune ~/bin"
