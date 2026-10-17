@@ -36,16 +36,16 @@ include 'web/qutebrowser'  -- https://github.com/qutebrowser/qutebrowser
 
 ```sh
 # Execute the script
-dotune -r ~/Repos/dotfiles
+dotune ~/Repos/dotfiles
 ```
 
 ## CLI
 
 ```sh
-dotune --help        # Show usage and options
-dotune               # Apply .dotune.lua in the current directory
-dotune --root <dir>  # Use another repository folder
-dotune --dry-run     # Don't apply write operations to the file system
+dotune --help     # Show usage and options
+dotune            # Apply .dotune.lua in the current directory
+dotune <dir>      # Use another repository folder
+dotune --dry-run  # Don't apply write operations to the file system
 ```
 
 ## Lua API
@@ -96,7 +96,7 @@ local binary = Path.which('vieb')          -- Find an executable on PATH, or ret
 local home = Path.home                     -- User's home directory
 local here = Path.here                     -- Current script's directory; alias of Path.script_dir
 local script = Path.script                 -- Current .dotune.lua file
-local root = Path.root                     -- Filesystem root (e.g. / or C:\), not repository root
+local root = Path.root                     -- Filesystem root (e.g. / or C:\)
 ```
 
 ### XDG

@@ -3,7 +3,7 @@ rust = "latest"
 
 [tasks.run]
 alias = "r"
-run = "cargo run -- --root example"
+run = "cargo run -- --dry-run example"
 
 [tasks.verify]
 alias = "v"
