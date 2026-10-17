@@ -125,6 +125,9 @@ local config = OS.match {
 }
 -- Priority: exact OS, then unix, then _;
 -- All keys are optional, but no match is an error
+
+local is_windows = OS.matches 'windows'
+-- ^ Same thing just for boolean conditions
 ```
 
 ### Platform paths
