@@ -2,6 +2,8 @@
 name = "dotune"
 version = "0.1.0"
 edition = "2024"
+description = "A cross-platform dotfile manager configured with Lua"
+license-file = "LICENSE"
 
 [dependencies]
 clap = { version = "4.6.6", features = ["derive"] }
