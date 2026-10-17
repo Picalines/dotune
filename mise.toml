@@ -1,5 +1,5 @@
 [tools]
-rust = ["latest", "nightly"]
+rust = { version = "1.98", components = ["clippy", "rustfmt"] }
 
 [tasks.publish]
 depends = "lint"
@@ -23,10 +23,10 @@ depends = "lint:*"
 
 [tasks.format]
 alias = "f"
-run = "cargo +nightly fmt"
+run = "cargo fmt"
 
 [tasks."lint:fmt"]
-run = "cargo +nightly fmt --check"
+run = "cargo fmt --check"
 
 [tasks."lint:clippy"]
 run = "cargo clippy"
