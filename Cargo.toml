@@ -1,6 +1,6 @@
 [package]
 name = "dotune"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 description = "A cross-platform dotfile manager configured with Lua"
 repository = "https://github.com/Picalines/dotune"
