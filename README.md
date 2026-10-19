@@ -46,6 +46,7 @@ dotune --help     # Show usage and options
 dotune            # Apply .dotune.lua in the current directory
 dotune <dir>      # Use another repository folder
 dotune --dry-run  # Don't apply write operations to the file system
+dotune --version  # Print version
 ```
 
 ## Lua API
