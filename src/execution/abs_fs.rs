@@ -4,17 +4,17 @@ use std::{fs, io};
 
 use thiserror::Error;
 
-use crate::model::{AbsolutePath, AbsolutePathBuf};
+use crate::model::{AbsolutePath, AbsolutePathBuf, RelativeDisplay};
 
 #[derive(Error, Debug)]
 pub enum FsError {
-    #[error("'{}' is not a directory", .0.display())]
+    #[error("'{}' is not a directory", .0.relative_display())]
     NotDirectory(PathBuf),
-    #[error("'{}' is a broken symlink", .0.display())]
+    #[error("'{}' is a broken symlink", .0.relative_display())]
     BrokenSymlink(PathBuf),
-    #[error("unsupported file type: '{}'", .0.display())]
+    #[error("unsupported file type: '{}'", .0.relative_display())]
     UnsupportedFileType(PathBuf),
-    #[error("'{}': {}", .0.display(), .1)]
+    #[error("'{}': {}", .0.relative_display(), .1)]
     Io(PathBuf, #[source] io::Error),
 }
 
@@ -58,6 +58,17 @@ pub fn resolve_partially_existing_path(path: &AbsolutePath) -> Result<AbsolutePa
         path.strip_prefix(existing_path)
             .expect("existing is an ancestor"),
     ))
+}
+
+pub fn find_parent_symlink_into<'a>(
+    path: &'a AbsolutePath,
+    target_root: &AbsolutePath,
+) -> Option<&'a AbsolutePath> {
+    path.ancestors().skip(1).find(|parent| {
+        fs::read_link(parent).is_ok()
+            && AbsolutePathBuf::canonicalize(parent)
+                .is_ok_and(|resolved| resolved.starts_with(target_root))
+    })
 }
 
 pub fn create_symlink(

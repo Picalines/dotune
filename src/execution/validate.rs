@@ -1,40 +1,14 @@
-use std::path::Path;
 use std::sync::Arc;
 
-use thiserror::Error;
-
-use super::abs_fs::{self, FsError};
+use super::abs_fs;
+use super::validation_error::{ValidationError, ValidationErrorContext};
 use crate::model::{
     AbsolutePath, AbsolutePathBuf, Command, CommandKind, Instruction, InstructionKind, RepoPath,
-    SourcePath, SourcePathError,
+    SourcePath,
 };
 
 pub struct ValidationContext<'a> {
     pub repo_path: &'a RepoPath,
-}
-
-#[derive(Error, Debug)]
-pub enum ValidationError {
-    #[error("{error}: {}", .path.display())]
-    SourcePath {
-        path: Arc<AbsolutePath>,
-        #[source]
-        error: SourcePathError,
-    },
-    #[error("an operation would have overwritten the repository: {}", .0.display())]
-    WriteToRepo(Arc<AbsolutePath>),
-    #[error("filesystem root cannot be a target")]
-    WriteToRoot,
-    #[error("path exists: {}", .path.display())]
-    OverwriteConflict { path: Arc<AbsolutePath> },
-    #[error(transparent)]
-    Fs(#[from] FsError),
-}
-
-#[derive(Debug)]
-pub struct ValidationErrorContext {
-    pub error: ValidationError,
-    pub defined_in: Arc<AbsolutePath>,
 }
 
 pub fn validate_instructions(
@@ -112,7 +86,11 @@ fn validate_copy(
             if target.starts_with(repo_path)
                 || (repo_path.starts_with(&target) && !metadata.is_dir())
             {
-                return Err(ValidationError::WriteToRepo(target.into()));
+                return Err(ValidationError::WriteToRepo {
+                    modified_path: target.into(),
+                    via_symlink: abs_fs::find_parent_symlink_into(&destination_path, repo_path)
+                        .map(ToOwned::to_owned),
+                });
             }
         }
     }
@@ -140,10 +118,11 @@ fn validate_destination(
     repo_path: &RepoPath,
     destination_path: &AbsolutePath,
 ) -> Result<AbsolutePathBuf, ValidationError> {
-    let repo_path: &Path = repo_path;
-
     if destination_path.starts_with(repo_path) {
-        return Err(ValidationError::WriteToRepo(destination_path.into()));
+        return Err(ValidationError::WriteToRepo {
+            modified_path: destination_path.into(),
+            via_symlink: None,
+        });
     }
 
     let destination_parent = destination_path
@@ -157,7 +136,11 @@ fn validate_destination(
     );
 
     if resolved_destination.starts_with(repo_path) {
-        return Err(ValidationError::WriteToRepo(destination_path.into()));
+        return Err(ValidationError::WriteToRepo {
+            modified_path: resolved_destination.into(),
+            via_symlink: abs_fs::find_parent_symlink_into(destination_path, repo_path)
+                .map(ToOwned::to_owned),
+        });
     }
 
     Ok(resolved_destination)

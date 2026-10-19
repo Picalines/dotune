@@ -27,6 +27,10 @@ impl AbsolutePath {
         self.0.parent().map(Self::from_path)
     }
 
+    pub fn ancestors(&self) -> impl Iterator<Item = &Self> {
+        self.0.ancestors().map(Self::from_path)
+    }
+
     pub fn join(&self, path: impl AsRef<Path>) -> AbsolutePathBuf {
         let mut buf = self.to_owned();
         buf.push(path);

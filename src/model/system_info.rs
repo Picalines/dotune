@@ -1,6 +1,6 @@
 use std::env;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 use super::{AbsolutePath, AbsolutePathBuf};
 
@@ -8,7 +8,6 @@ use super::{AbsolutePath, AbsolutePathBuf};
 pub struct SystemInfo {
     pub os: &'static str,
     pub is_unix: bool,
-    pub cwd: Arc<AbsolutePath>,
     pub home: Arc<AbsolutePath>,
     pub root: Arc<AbsolutePath>,
     pub windows: WindowsPaths,
@@ -39,18 +38,11 @@ pub struct XdgPaths {
 
 impl SystemInfo {
     pub fn detect() -> Self {
-        let cwd = env::current_dir().expect("could not determine the current directory");
-        let cwd = AbsolutePathBuf::new(cwd)
-            .expect("current directory must be an absolute path without indirection");
-
-        let home = env::home_dir().expect("could not determine the home directory");
-        let home = AbsolutePathBuf::new(home)
-            .expect("home directory must be an absolute path without indirection");
+        let home = HOME_DIR.clone();
 
         let root: Arc<AbsolutePath> = home
             .ancestors()
             .last()
-            .and_then(AbsolutePath::new)
             .expect("an absolute path always has a root")
             .into();
 
@@ -75,8 +67,7 @@ impl SystemInfo {
         Self {
             os: env::consts::OS,
             is_unix: cfg!(unix),
-            cwd: cwd.into(),
-            home: home.into(),
+            home,
             root,
             windows,
             mac,
@@ -84,6 +75,20 @@ impl SystemInfo {
         }
     }
 }
+
+pub(super) static CURRENT_DIR: LazyLock<Arc<AbsolutePath>> = LazyLock::new(|| {
+    let cwd = env::current_dir().expect("could not determine the current directory");
+    AbsolutePathBuf::new(cwd)
+        .expect("current directory must be an absolute path without indirection")
+        .into()
+});
+
+pub(super) static HOME_DIR: LazyLock<Arc<AbsolutePath>> = LazyLock::new(|| {
+    let home = env::home_dir().expect("could not determine the home directory");
+    AbsolutePathBuf::new(home)
+        .expect("home directory must be an absolute path without indirection")
+        .into()
+});
 
 fn env_path_or_default(variable: &str, home: &AbsolutePath, default: &str) -> Arc<AbsolutePath> {
     env::var_os(variable)

@@ -17,7 +17,7 @@ fn main() -> ExitCode {
 
     let system_info = Arc::new(SystemInfo::detect());
 
-    let mut printer = Printer::new(system_info.clone());
+    let mut printer = Printer::new();
 
     let instructions = match lua::run_config_scripts(&args, system_info) {
         Ok(instructions) => instructions,

@@ -1,22 +1,19 @@
 use core::fmt;
 use core::fmt::Display;
-use std::path::{MAIN_SEPARATOR, Path, PathBuf};
-use std::sync::Arc;
+use std::path::{Path, PathBuf};
 
 use colored::Colorize;
 
 use crate::execution::{ExecutionLog, ValidationErrorContext};
-use crate::model::SystemInfo;
+use crate::model::RelativeDisplay;
 
 pub struct Printer {
-    system_info: Arc<SystemInfo>,
     previous_defined_in: Option<PathBuf>,
 }
 
 impl Printer {
-    pub fn new(system_info: Arc<SystemInfo>) -> Self {
+    pub fn new() -> Self {
         Self {
-            system_info,
             previous_defined_in: None,
         }
     }
@@ -35,10 +32,10 @@ impl Printer {
 
         match log {
             ExecutionLog::DirectoryCreated(path) => {
-                println!("{} {}", Label::Created, self.display_path(&path));
+                println!("{} {}", Label::Created, path.relative_display());
             }
             ExecutionLog::PathDeleted(path) => {
-                println!("{} {}", Label::Deleted, self.display_path(&path));
+                println!("{} {}", Label::Deleted, path.relative_display());
             }
             ExecutionLog::SymlinkCreated {
                 source_path,
@@ -47,9 +44,9 @@ impl Printer {
                 println!(
                     "{} {} {} {}",
                     Label::Linked,
-                    self.display_path(&source_path),
+                    source_path.relative_display(),
                     Label::Arrow,
-                    self.display_path(&destination_path)
+                    destination_path.relative_display()
                 );
             }
             ExecutionLog::SymlinkRecreated {
@@ -59,9 +56,9 @@ impl Printer {
                 println!(
                     "{} {} {} {}",
                     Label::Relinked,
-                    self.display_path(&source_path),
+                    source_path.relative_display(),
                     Label::Arrow,
-                    self.display_path(&destination_path)
+                    destination_path.relative_display()
                 );
             }
             ExecutionLog::Copied {
@@ -71,9 +68,9 @@ impl Printer {
                 println!(
                     "{} {} {} {}",
                     Label::Copied,
-                    self.display_path(&source_path),
+                    source_path.relative_display(),
                     Label::Arrow,
-                    self.display_path(&destination_path)
+                    destination_path.relative_display()
                 );
             }
             ExecutionLog::Error {
@@ -86,9 +83,9 @@ impl Printer {
                     "{} could not {} {} {} {}: {}",
                     Label::Error,
                     operation,
-                    self.display_path(&source_path),
+                    source_path.relative_display(),
                     Label::Arrow,
-                    self.display_path(&destination_path),
+                    destination_path.relative_display(),
                     error
                 );
             }
@@ -100,29 +97,11 @@ impl Printer {
             return;
         }
 
-        let path = self.display_path(defined_in).to_string().dimmed();
+        let path = defined_in.relative_display().to_string().dimmed();
 
         eprintln!("{} {path}", Label::Comment);
 
         self.previous_defined_in = Some(defined_in.to_owned());
-    }
-
-    fn display_path(&self, path: &Path) -> impl fmt::Display {
-        fmt::from_fn(|formatter| {
-            if let Ok(relative) = path.strip_prefix(self.system_info.cwd.as_ref()) {
-                return relative.display().fmt(formatter);
-            }
-
-            if let Ok(relative) = path.strip_prefix(self.system_info.home.as_ref()) {
-                formatter.write_str("~")?;
-                if relative.is_empty() {
-                    return Ok(());
-                }
-                return write!(formatter, "{}{}", MAIN_SEPARATOR, relative.display());
-            }
-
-            path.display().fmt(formatter)
-        })
     }
 }
 
