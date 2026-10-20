@@ -4,8 +4,9 @@ use std::sync::Arc;
 use itertools::Itertools;
 use mlua::prelude::*;
 
+use super::super::lua_app_data::LuaAppData;
 use super::utils::bad_argument;
-use crate::model::{AbsolutePath, AbsolutePathBuf, SystemInfo};
+use crate::model::{AbsolutePath, AbsolutePathBuf};
 
 #[derive(LuaUserData, FromLua, Clone)]
 pub struct Path(#[lua(skip)] pub Arc<AbsolutePath>);
@@ -14,8 +15,6 @@ pub struct Path(#[lua(skip)] pub Arc<AbsolutePath>);
 pub struct PathFactory {
     #[lua(skip)]
     pub script_path: Arc<AbsolutePath>,
-    #[lua(skip)]
-    pub system_info: Arc<SystemInfo>,
 }
 
 #[mlua::userdata_impl]
@@ -39,13 +38,13 @@ impl PathFactory {
     }
 
     #[lua(getter, infallible)]
-    fn home(&self) -> Path {
-        Path(self.system_info.home.clone())
+    fn home(&self, lua: &Lua) -> Path {
+        Path(LuaAppData::get(lua).system_info.home.clone())
     }
 
     #[lua(getter, infallible)]
-    fn root(&self) -> Path {
-        Path(self.system_info.root.clone())
+    fn root(&self, lua: &Lua) -> Path {
+        Path(LuaAppData::get(lua).system_info.root.clone())
     }
 
     #[lua]

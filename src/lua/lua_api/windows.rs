@@ -1,33 +1,49 @@
-use std::sync::Arc;
-
 use mlua::prelude::*;
 
+use super::super::lua_app_data::LuaAppData;
 use super::path::Path;
-use crate::model::SystemInfo;
 
 #[derive(LuaUserData)]
-pub struct Windows(#[lua(skip)] pub Arc<SystemInfo>);
+pub struct Windows;
 
 #[mlua::userdata_impl]
 impl Windows {
     #[lua(getter, infallible)]
-    fn local_app_data(&self) -> Path {
-        Path(self.0.windows.local_app_data.clone())
+    fn local_app_data(&self, lua: &Lua) -> Path {
+        Path(
+            LuaAppData::get(lua)
+                .system_info
+                .windows
+                .local_app_data
+                .clone(),
+        )
     }
 
     #[lua(getter, infallible)]
-    fn roaming_app_data(&self) -> Path {
-        Path(self.0.windows.roaming_app_data.clone())
+    fn roaming_app_data(&self, lua: &Lua) -> Path {
+        Path(
+            LuaAppData::get(lua)
+                .system_info
+                .windows
+                .roaming_app_data
+                .clone(),
+        )
     }
 
     #[lua(getter, infallible)]
-    fn local_low_app_data(&self) -> Path {
-        Path(self.0.windows.local_low_app_data.clone())
+    fn local_low_app_data(&self, lua: &Lua) -> Path {
+        Path(
+            LuaAppData::get(lua)
+                .system_info
+                .windows
+                .local_low_app_data
+                .clone(),
+        )
     }
 
     #[lua(getter, infallible)]
-    fn documents(&self) -> Path {
-        Path(self.0.windows.documents.clone())
+    fn documents(&self, lua: &Lua) -> Path {
+        Path(LuaAppData::get(lua).system_info.windows.documents.clone())
     }
 
     #[lua(meta, infallible)]

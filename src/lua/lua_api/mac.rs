@@ -1,18 +1,16 @@
-use std::sync::Arc;
-
 use mlua::prelude::*;
 
+use super::super::lua_app_data::LuaAppData;
 use super::path::Path;
-use crate::model::SystemInfo;
 
 #[derive(LuaUserData)]
-pub struct Mac(#[lua(skip)] pub Arc<SystemInfo>);
+pub struct Mac;
 
 #[mlua::userdata_impl]
 impl Mac {
     #[lua(getter, infallible)]
-    fn applications(&self) -> Path {
-        Path(self.0.mac.applications.clone())
+    fn applications(&self, lua: &Lua) -> Path {
+        Path(LuaAppData::get(lua).system_info.mac.applications.clone())
     }
 
     #[lua(meta, infallible)]

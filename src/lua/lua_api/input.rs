@@ -1,11 +1,9 @@
-use std::sync::Arc;
-
 use mlua::prelude::*;
 use strum::{EnumString, VariantNames};
 
+use super::super::lua_app_data::LuaAppData;
 use super::path::Path;
 use super::utils::bad_argument;
-use crate::model::Inputs;
 
 #[derive(LuaUserData)]
 pub struct Input {
@@ -21,8 +19,8 @@ enum InputType {
 }
 
 impl Input {
-    pub fn new(lua: &Lua, inputs: Arc<Inputs>) -> LuaResult<Self> {
-        let param = lua.create_function(move |lua, (name, kind): (String, String)| {
+    pub fn new(lua: &Lua) -> LuaResult<Self> {
+        let param = lua.create_function(|lua, (name, kind): (String, String)| {
             let kind = kind.parse::<InputType>().map_err(|_| {
                 bad_argument(
                     "Input.param",
@@ -34,6 +32,9 @@ impl Input {
                     ),
                 )
             })?;
+
+            let app_data = LuaAppData::get(lua);
+            let inputs = &app_data.inputs;
 
             match kind {
                 InputType::String => inputs

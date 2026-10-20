@@ -1,9 +1,7 @@
-use std::sync::Arc;
-
 use mlua::prelude::*;
 
+use super::super::lua_app_data::LuaAppData;
 use super::utils::bad_argument;
-use crate::model::SystemInfo;
 
 #[derive(LuaUserData)]
 pub struct Os {
@@ -22,12 +20,18 @@ impl Os {
 }
 
 impl Os {
-    pub fn new(lua: &Lua, system_info: Arc<SystemInfo>) -> LuaResult<Self> {
+    pub fn new(lua: &Lua) -> LuaResult<Self> {
+        let (os, is_unix) = {
+            let app_data = LuaAppData::get(lua);
+            let system_info = &app_data.system_info;
+            (system_info.os, system_info.is_unix)
+        };
+
         let patterns = [
-            ("windows", system_info.os == "windows"),
-            ("macos", system_info.os == "macos"),
-            ("linux", system_info.os == "linux"),
-            ("unix", system_info.is_unix),
+            ("windows", os == "windows"),
+            ("macos", os == "macos"),
+            ("linux", os == "linux"),
+            ("unix", is_unix),
             ("_", true),
         ];
 
@@ -73,7 +77,7 @@ impl Os {
                 "OS.match",
                 1,
                 Some("options"),
-                &format!("no matching value for OS '{}'", system_info.os),
+                &format!("no matching value for OS '{os}'"),
             ))
         })?;
 

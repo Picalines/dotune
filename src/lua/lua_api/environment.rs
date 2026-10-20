@@ -10,37 +10,22 @@ use super::os::Os;
 use super::path::PathFactory;
 use super::windows::Windows;
 use super::xdg::Xdg;
-use crate::model::{AbsolutePath, Inputs, SystemInfo};
+use crate::model::AbsolutePath;
 
-// TODO: maybe store script_path in Lua?
-pub fn script_environment(
-    lua: &Lua,
-    script_path: Arc<AbsolutePath>,
-    system_info: Arc<SystemInfo>,
-    inputs: Arc<Inputs>,
-) -> LuaResult<LuaTable> {
+pub fn script_environment(lua: &Lua, script_path: Arc<AbsolutePath>) -> LuaResult<LuaTable> {
     let environment = lua.create_table()?;
 
-    environment.set(
-        "include",
-        create_include(lua, &script_path, system_info.clone(), inputs.clone())?,
-    )?;
+    environment.set("include", create_include(lua, &script_path)?)?;
 
     environment.set("Dot", Dot::new(lua, script_path.clone())?)?;
-    environment.set("Input", Input::new(lua, inputs)?)?;
+    environment.set("Input", Input::new(lua)?)?;
 
-    environment.set(
-        "Path",
-        PathFactory {
-            script_path,
-            system_info: system_info.clone(),
-        },
-    )?;
+    environment.set("Path", PathFactory { script_path })?;
 
-    environment.set("OS", Os::new(lua, system_info.clone())?)?;
-    environment.set("Windows", Windows(system_info.clone()))?;
-    environment.set("Mac", Mac(system_info.clone()))?;
-    environment.set("XDG", Xdg(system_info))?;
+    environment.set("OS", Os::new(lua)?)?;
+    environment.set("Windows", Windows)?;
+    environment.set("Mac", Mac)?;
+    environment.set("XDG", Xdg)?;
 
     let env_meta = lua.create_table()?;
     env_meta.set("__index", lua.globals())?;

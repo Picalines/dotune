@@ -3,6 +3,7 @@ use std::sync::Arc;
 use mlua::prelude::*;
 
 use super::path::Path;
+use crate::lua::lua_app_data::LuaAppData;
 use crate::model::{AbsolutePath, Instruction, InstructionKind};
 
 #[derive(LuaUserData)]
@@ -18,7 +19,7 @@ impl Dot {
         let link_script_path = script_path.clone();
         let link =
             lua.create_function(move |lua, (source_path, destination_path): (Path, Path)| {
-                Self::push_instruction(
+                LuaAppData::push_instruction(
                     lua,
                     Instruction {
                         defined_in: link_script_path.clone(),
@@ -33,7 +34,7 @@ impl Dot {
 
         let copy =
             lua.create_function(move |lua, (source_path, destination_path): (Path, Path)| {
-                Self::push_instruction(
+                LuaAppData::push_instruction(
                     lua,
                     Instruction {
                         defined_in: script_path.clone(),
@@ -47,11 +48,5 @@ impl Dot {
             })?;
 
         Ok(Self { link, copy })
-    }
-
-    fn push_instruction(lua: &Lua, instruction: Instruction) {
-        lua.app_data_mut::<Vec<Instruction>>()
-            .expect("instruction list should be defined before execution")
-            .push(instruction);
     }
 }
