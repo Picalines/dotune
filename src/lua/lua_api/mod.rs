@@ -1,6 +1,7 @@
 mod dot;
 mod environment;
 mod include;
+mod input;
 mod mac;
 mod os;
 mod path;

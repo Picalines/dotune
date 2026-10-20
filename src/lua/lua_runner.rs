@@ -3,12 +3,12 @@ use std::sync::Arc;
 use mlua::prelude::*;
 
 use super::lua_exec::execute_root_script;
-use crate::cli;
-use crate::model::{Instruction, SystemInfo};
+use crate::model::{Inputs, Instruction, RepoPath, SystemInfo};
 
 pub fn run_config_scripts(
-    cli_args: &cli::Args,
+    repo_path: &RepoPath,
     system_info: Arc<SystemInfo>,
+    inputs: Arc<Inputs>,
 ) -> LuaResult<Vec<Instruction>> {
     let lua = Lua::new_with(
         LuaStdLib::STRING | LuaStdLib::TABLE | LuaStdLib::UTF8,
@@ -17,7 +17,7 @@ pub fn run_config_scripts(
 
     lua.set_app_data(Vec::<Instruction>::new());
 
-    execute_root_script(&lua, cli_args, system_info)?;
+    execute_root_script(&lua, repo_path, system_info, inputs)?;
 
     Ok(lua
         .remove_app_data::<Vec<Instruction>>()

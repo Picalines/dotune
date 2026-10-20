@@ -4,27 +4,30 @@ use mlua::prelude::*;
 
 use super::dot::Dot;
 use super::include::create_include;
+use super::input::Input;
 use super::mac::Mac;
 use super::os::Os;
 use super::path::PathFactory;
 use super::windows::Windows;
 use super::xdg::Xdg;
-use crate::model::{AbsolutePath, SystemInfo};
+use crate::model::{AbsolutePath, Inputs, SystemInfo};
 
 // TODO: maybe store script_path in Lua?
 pub fn script_environment(
     lua: &Lua,
     script_path: Arc<AbsolutePath>,
     system_info: Arc<SystemInfo>,
+    inputs: Arc<Inputs>,
 ) -> LuaResult<LuaTable> {
     let environment = lua.create_table()?;
 
     environment.set(
         "include",
-        create_include(lua, &script_path, system_info.clone())?,
+        create_include(lua, &script_path, system_info.clone(), inputs.clone())?,
     )?;
 
     environment.set("Dot", Dot::new(lua, script_path.clone())?)?;
+    environment.set("Input", Input::new(lua, inputs)?)?;
 
     environment.set(
         "Path",

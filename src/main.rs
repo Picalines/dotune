@@ -10,7 +10,7 @@ use clap::Parser;
 use execution::{ExecutionLog, ValidationContext, execute_commands, validate_instructions};
 
 use crate::cli::Printer;
-use crate::model::SystemInfo;
+use crate::model::{Inputs, SystemInfo};
 
 fn main() -> ExitCode {
     let args = cli::Args::parse();
@@ -19,7 +19,15 @@ fn main() -> ExitCode {
 
     let mut printer = Printer::new();
 
-    let instructions = match lua::run_config_scripts(&args, system_info) {
+    let inputs = match Inputs::new(args.params) {
+        Ok(inputs) => Arc::new(inputs),
+        Err(error) => {
+            printer.print_error(error);
+            return ExitCode::FAILURE;
+        }
+    };
+
+    let instructions = match lua::run_config_scripts(&args.repo_path, system_info, inputs) {
         Ok(instructions) => instructions,
         Err(error) => {
             // TODO: nice file path to a script?

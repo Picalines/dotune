@@ -14,6 +14,7 @@ dunce = "1.0.5"
 indoc = "2.0.8"
 itertools = "0.15.0"
 mlua = { version = "0.12.0", features = ["lua55", "macros", "userdata-wrappers", "vendored"] }
+strum = { version = "0.28.0", features = ["derive"] }
 thiserror = "2.0.21"
 which = "8.0.5"
 

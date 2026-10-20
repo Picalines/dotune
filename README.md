@@ -47,6 +47,9 @@ dotune            # Apply .dotune.lua in the current directory
 dotune <dir>      # Use another repository folder
 dotune --dry-run  # Don't apply write operations to the file system
 dotune --version  # Print version
+
+# Pass parameters to scripts with -p / --param NAME=VALUE (repeat for multiple pairs)
+dotune --param <key>=<value> <dir>
 ```
 
 ## Lua API
@@ -60,6 +63,15 @@ Lua scripts have access to very basic parts of standard library: `print`, `strin
 ```lua
 include 'shell'     -- Run shell/.dotune.lua relative to the current script
 include 'web/vieb'  -- Nested paths are allowed; absolute paths, . and .. are not
+```
+
+### Input
+
+```lua
+local target = Input.param('target', 'path')      -- Path. May not exist
+local profile = Input.param('profile', 'string')  -- string. May be empty
+
+Dot.link(Path.here / profile / 'config', target / '.config')
 ```
 
 ### Dot
