@@ -1,4 +1,4 @@
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 
 use crate::model::{AbsolutePathBuf, RepoPath};
 
@@ -17,12 +17,22 @@ pub struct Args {
     /// Script input parameter (repeat for multiple parameters)
     #[arg(short = 'p', long = "param", value_name = "NAME=VALUE", value_parser = parse_param)]
     pub params: Vec<(String, String)>,
+
+    /// Output format
+    #[arg(short = 'o', long, value_enum, default_value = "human")]
+    pub output: OutputFormat,
+}
+
+#[derive(ValueEnum, Clone)]
+pub enum OutputFormat {
+    Human,
 }
 
 fn parse_repo_path(path_arg: &str) -> Result<RepoPath, String> {
     let path = AbsolutePathBuf::canonicalize(path_arg).map_err(|error| error.to_string())?;
     RepoPath::new(&path).map_err(|error| error.to_string())
 }
+
 fn parse_param(value: &str) -> Result<(String, String), String> {
     let (name, value) = value
         .split_once('=')

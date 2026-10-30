@@ -9,20 +9,24 @@ use std::sync::Arc;
 use clap::Parser;
 use execution::{ExecutionLog, ValidationContext, execute_commands, validate_instructions};
 
-use crate::cli::Printer;
+use crate::cli::{Args, HumanPrinter, OutputFormat, Printer};
 use crate::model::{Inputs, SystemInfo};
 
 fn main() -> ExitCode {
-    let args = cli::Args::parse();
+    let args = Args::parse();
 
+    match args.output {
+        OutputFormat::Human => run(args, HumanPrinter::new()),
+    }
+}
+
+fn run(args: Args, mut printer: impl Printer) -> ExitCode {
     let system_info = Arc::new(SystemInfo::detect());
-
-    let mut printer = Printer::new();
 
     let inputs = match Inputs::new(args.params) {
         Ok(inputs) => Arc::new(inputs),
         Err(error) => {
-            printer.print_error(error);
+            printer.error(error);
             return ExitCode::FAILURE;
         }
     };
@@ -31,7 +35,7 @@ fn main() -> ExitCode {
         Ok(instructions) => instructions,
         Err(error) => {
             // TODO: nice file path to a script?
-            printer.print_error(error);
+            printer.error(error);
             return ExitCode::FAILURE;
         }
     };
@@ -44,7 +48,7 @@ fn main() -> ExitCode {
     ) {
         Ok(commands) => commands,
         Err(error_context) => {
-            printer.print_validation_error(error_context);
+            printer.validation_error(error_context);
             return ExitCode::FAILURE;
         }
     };
@@ -52,7 +56,7 @@ fn main() -> ExitCode {
     let mut has_errors = false;
     execute_commands(commands, args.dry_run, |defined_in, log| {
         has_errors |= matches!(log, ExecutionLog::Error { .. });
-        printer.print_execution_log(defined_in, log);
+        printer.execution_log(defined_in, log);
     });
 
     if has_errors {

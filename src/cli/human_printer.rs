@@ -4,30 +4,45 @@ use std::path::{Path, PathBuf};
 
 use colored::Colorize;
 
+use super::Printer;
 use crate::execution::{ExecutionLog, ValidationErrorContext};
 use crate::model::RelativeDisplay;
 
-pub struct Printer {
+pub struct HumanPrinter {
     previous_defined_in: Option<PathBuf>,
 }
 
-impl Printer {
+impl HumanPrinter {
     pub fn new() -> Self {
         Self {
             previous_defined_in: None,
         }
     }
 
-    pub fn print_error(&self, error: impl Display) {
+    fn eprint_config(&mut self, defined_in: &Path) {
+        if self.previous_defined_in.as_deref() == Some(defined_in) {
+            return;
+        }
+
+        let path = defined_in.relative_display().to_string().dimmed();
+
+        eprintln!("{} {path}", Label::Comment);
+
+        self.previous_defined_in = Some(defined_in.to_owned());
+    }
+}
+
+impl Printer for HumanPrinter {
+    fn error(&self, error: impl Display) {
         eprintln!("{} {error}", Label::Error);
     }
 
-    pub fn print_validation_error(&mut self, error: ValidationErrorContext) {
+    fn validation_error(&mut self, error: ValidationErrorContext) {
         self.eprint_config(&error.defined_in);
-        self.print_error(error.error);
+        self.error(error.error);
     }
 
-    pub fn print_execution_log(&mut self, defined_in: &Path, log: ExecutionLog) {
+    fn execution_log(&mut self, defined_in: &Path, log: ExecutionLog) {
         self.eprint_config(defined_in);
 
         match log {
@@ -90,18 +105,6 @@ impl Printer {
                 );
             }
         }
-    }
-
-    fn eprint_config(&mut self, defined_in: &Path) {
-        if self.previous_defined_in.as_deref() == Some(defined_in) {
-            return;
-        }
-
-        let path = defined_in.relative_display().to_string().dimmed();
-
-        eprintln!("{} {path}", Label::Comment);
-
-        self.previous_defined_in = Some(defined_in.to_owned());
     }
 }
 
