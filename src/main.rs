@@ -9,7 +9,7 @@ use std::sync::Arc;
 use clap::Parser;
 use execution::{ExecutionLog, ValidationContext, execute_commands, validate_instructions};
 
-use crate::cli::{Args, HumanPrinter, OutputFormat, Printer};
+use crate::cli::{Args, HumanPrinter, OutputFormat, PorcelainPrinter, Printer};
 use crate::model::{Inputs, SystemInfo};
 
 fn main() -> ExitCode {
@@ -17,6 +17,7 @@ fn main() -> ExitCode {
 
     match args.output {
         OutputFormat::Human => run(args, HumanPrinter::new()),
+        OutputFormat::Porcelain => run(args, PorcelainPrinter),
     }
 }
 

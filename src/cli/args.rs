@@ -26,6 +26,7 @@ pub struct Args {
 #[derive(ValueEnum, Clone)]
 pub enum OutputFormat {
     Human,
+    Porcelain,
 }
 
 fn parse_repo_path(path_arg: &str) -> Result<RepoPath, String> {

@@ -53,6 +53,27 @@ dotune --version      # Print version
 dotune --param <key>=<value> <dir>
 ```
 
+### Porcelain output
+
+Use `-o porcelain` for easy-to-parse output. Fields are separated by NUL, records by two NUL bytes. The first field defines a kind of record. All paths are absolute and unescaped
+
+| Record | Fields after record name |
+| --- | --- |
+| `dir-created` | directory path |
+| `path-deleted` | deleted path |
+| `symlink-created` | source path, destination path |
+| `symlink-recreated` | source path, destination path |
+| `copied-over` | source path, destination path |
+| `error` | command (`link` or `copy`), source path, destination path |
+
+```sh
+dotune -o porcelain | gawk 'BEGIN { RS = "\0\0"; FS = ORS = "\0" } $1 == "symlink-created" { print $3 }'
+```
+
+Output in stderr is not strict
+
+(Porcelain is meant to be stable, but while we're in `v0.x` I can't guarantee this)
+
 ## Lua API
 
 ### Standard library
