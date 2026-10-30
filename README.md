@@ -46,7 +46,7 @@ dotune --help         # Show usage and options
 dotune                # Apply .dotune.lua in the current directory
 dotune <dir>          # Use another repository folder
 dotune --dry-run      # Don't apply write operations to the file system
-dotune --ouput human  # Select output format
+dotune --output human # Select output format
 dotune --version      # Print version
 
 # Pass parameters to scripts with -p / --param NAME=VALUE (repeat for multiple pairs)

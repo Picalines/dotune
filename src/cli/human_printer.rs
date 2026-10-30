@@ -121,17 +121,21 @@ enum Label {
 
 impl fmt::Display for Label {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let label = match self {
-            Self::Linked => "ln".purple(),
-            Self::Relinked => "ln".blue(),
-            Self::Copied => "cp".yellow(),
-            Self::Deleted => "rm".yellow(),
-            Self::Created => "mkdir".purple(),
-            Self::Error => "error".red(),
-            Self::Arrow => "->".blue(),
-            Self::Comment => "#".dimmed(),
+        let (marker, label) = match self {
+            Self::Linked => (Some("+".green()), "ln".blue()),
+            Self::Relinked => (Some("~".blue()), "ln".blue()),
+            Self::Copied => (Some("+".green()), "cp".yellow()),
+            Self::Deleted => (Some("-".red()), "rm".red()),
+            Self::Created => (Some("+".green()), "mkdir".purple()),
+            Self::Error => (None, "error".red()),
+            Self::Arrow => (None, "->".blue()),
+            Self::Comment => (None, "#".dimmed()),
         };
 
-        fmt::Display::fmt(&label, formatter)
+        if let Some(marker) = marker {
+            write!(formatter, "{marker} ")?;
+        }
+
+        write!(formatter, "{label}")
     }
 }
