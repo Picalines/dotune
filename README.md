@@ -80,6 +80,8 @@ Output in stderr is not strict
 
 Lua scripts have access to very basic parts of standard library: `print`, `string`, `table` and `utf8`. More complicated stuff like file I/O and environment access are disabled
 
+One difference is that `print` writes to stderr, so you can write messages without affecting the porcelain output
+
 ### include
 
 ```lua

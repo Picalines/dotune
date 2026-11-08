@@ -8,6 +8,7 @@ use super::input::Input;
 use super::mac::Mac;
 use super::os::Os;
 use super::path::PathFactory;
+use super::print::create_print;
 use super::windows::Windows;
 use super::xdg::Xdg;
 use crate::model::AbsolutePath;
@@ -15,6 +16,7 @@ use crate::model::AbsolutePath;
 pub fn script_environment(lua: &Lua, script_path: Arc<AbsolutePath>) -> LuaResult<LuaTable> {
     let environment = lua.create_table()?;
 
+    environment.set("print", create_print(lua)?)?;
     environment.set("include", create_include(lua, &script_path)?)?;
 
     environment.set("Dot", Dot::new(lua, script_path.clone())?)?;
